@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT - Parameters Level</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* --- CORE THEME --- */
+        :root {
+            --bg-dark: #050510;
+            --card-bg: #0f0f1a;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --neon-purple: #bd00ff;
+            --neon-cyan: #00f0ff;
+            --neon-green: #00ff9d;
+            --danger: #ff0055;
+            --border-color: #2a2a35;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; }
+
+        /* NAV & HEADER */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 1rem 2rem; background-color: var(--bg-dark); border-bottom: 1px solid var(--border-color); }
+        .logo { font-size: 1.5rem; font-weight: bold; color: var(--neon-cyan); }
+        .nav-right { display: flex; gap: 25px; align-items: center; }
+        .exit-btn { color: var(--text-muted); font-size: 1.3rem; text-decoration: none; transition: 0.3s; }
+        .exit-btn:hover { color: var(--danger); transform: translateX(3px); }
+
+        /* STATS */
+        .stats-bar { display: flex; justify-content: space-around; padding: 1rem 2rem; background-color: #080812; border-bottom: 1px solid var(--border-color); }
+        .xp-container { width: 150px; height: 6px; background: #333; border-radius: 3px; margin-top: 5px; }
+        .xp-fill { width: 20%; height: 100%; background: var(--neon-purple); border-radius: 3px; transition: width 0.5s ease; }
+
+        /* STAGE */
+        .main-stage { flex: 1; display: flex; justify-content: center; align-items: center; padding: 2rem; }
+        .level-card { width: 100%; max-width: 800px; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative;}
+        
+        .progress-dots { display: flex; gap: 8px; margin-bottom: 2rem; justify-content: center;}
+        .dot { width: 10px; height: 10px; background: #333; border-radius: 50%; transition: all 0.3s; }
+        .dot.active { background: var(--neon-cyan); box-shadow: 0 0 5px var(--neon-cyan); transform: scale(1.2); }
+
+        .slide { display: none; animation: fadeIn 0.4s ease; }
+        .slide.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        h2 { font-size: 2rem; margin-bottom: 1rem; color: white; }
+        h2 span { color: var(--neon-purple); }
+        p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1.1rem; line-height: 1.6; }
+
+        .code-block { background: black; padding: 1.5rem; border-left: 4px solid var(--neon-purple); font-family: monospace; border-radius: 0 8px 8px 0; margin-bottom: 20px;}
+        
+        /* BUTTONS */
+        .btn-group { display: flex; justify-content: flex-end; margin-top: 2rem; }
+        .btn { background: transparent; border: 1px solid var(--border-color); color: white; padding: 10px 25px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: all 0.3s; margin-left: 10px; }
+        .btn-primary { background: var(--neon-purple); border-color: var(--neon-purple); box-shadow: 0 0 15px rgba(189, 0, 255, 0.3); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 0 25px rgba(189, 0, 255, 0.6); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+
+        /* --- GAME: ROBO PAINTER --- */
+        .robo-container {
+            display: flex; justify-content: center; align-items: center; gap: 40px; margin: 2rem 0;
+            background: rgba(255,255,255,0.03); padding: 20px; border-radius: 12px;
+        }
+        
+        .robot-icon {
+            font-size: 6rem;
+            color: #444; /* Default gray */
+            transition: color 0.5s ease, transform 0.3s;
+            filter: drop-shadow(0 0 10px rgba(0,0,0,0.5));
+        }
+
+        .controls {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+
+        .color-btn {
+            padding: 10px 15px; border: none; border-radius: 5px; color: black; font-weight: bold; cursor: pointer; opacity: 0.7; transition: 0.2s;
+        }
+        .color-btn:hover { opacity: 1; transform: scale(1.05); }
+        .btn-red { background: #ff4444; box-shadow: 0 0 10px #ff4444; }
+        .btn-blue { background: #0088ff; box-shadow: 0 0 10px #0088ff; }
+        .btn-green { background: #00ff88; box-shadow: 0 0 10px #00ff88; }
+
+        /* QUIZ STYLES */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-card { background: rgba(255,255,255,0.05); border: 1px solid var(--border-color); padding: 15px; border-radius: 8px; cursor: pointer; text-align: center; }
+        .option-card:hover { border-color: var(--neon-cyan); }
+        .option-card.correct { border-color: var(--neon-green); color: var(--neon-green); background: rgba(0,255,157,0.1); }
+        .option-card.wrong { border-color: var(--danger); color: var(--danger); }
+
+        /* INPUT FIELD QUIZ */
+        .fill-blank-area {
+            background: black; padding: 20px; text-align: center; font-family: monospace; font-size: 1.2rem;
+            border: 1px solid var(--border-color); border-radius: 8px;
+        }
+        .code-input {
+            background: #222; border: none; border-bottom: 2px solid var(--neon-purple);
+            color: white; width: 60px; font-family: monospace; font-size: 1.2rem; text-align: center; outline: none;
+        }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">MINDCRAFT</div>
+        <div class="nav-right">
+            <div class="user-profile">
+                <span>sarayu</span>
+                <i class="fas fa-user-circle" style="color:var(--neon-purple)"></i>
+            </div>
+            <a href="clickable.html" class="exit-btn"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <div class="stats-bar">
+        <div>🏆 Level 1</div>
+        <div>⚡ XP <div class="xp-container"><div class="xp-fill" id="xp-bar" style="width: 25%"></div></div></div>
+        <div style="color:var(--neon-green)">📈 Streak 1 day</div>
+    </div>
+
+    <div class="main-stage">
+        <div class="level-card">
+            <div class="progress-dots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="slide active" id="slide1">
+                <h2>What are <span>Parameters</span>?</h2>
+                <p>Parameters are variables that go inside the function's parentheses <code>()</code>. They act as inputs to make the function flexible.</p>
+                
+                <div class="code-block">
+                    def greet(<span style="color:var(--neon-cyan)">name</span>):<br>
+                    &nbsp;&nbsp; print("Hello " + <span style="color:var(--neon-cyan)">name</span>)
+                </div>
+
+                <p style="font-size: 0.9rem">Without parameters, a function does the exact same thing every time. With parameters, it adapts!</p>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="nextSlide(2)">Try Interactive Demo &rarr;</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide2">
+                <h2>The <span>Robo Painter</span></h2>
+                <p>Use the parameter <code>color</code> to change the robot's appearance.</p>
+
+                <div class="code-block" style="text-align: center;">
+                    paint_robot( <span id="code-param" style="color:var(--neon-cyan)">"gray"</span> )
+                </div>
+
+                <div class="robo-container">
+                    <i class="fas fa-robot robot-icon" id="robot"></i>
+                    
+                    <div class="controls">
+                        <button class="color-btn btn-red" onclick="paintRobot('red')">"red"</button>
+                        <button class="color-btn btn-blue" onclick="paintRobot('blue')">"blue"</button>
+                        <button class="color-btn btn-green" onclick="paintRobot('green')">"green"</button>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextSlide(1)">Back</button>
+                    <button class="btn btn-primary" id="btn-s2" disabled onclick="nextSlide(3)">Continue &rarr;</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide3">
+                <h2>Question <span>1 of 3</span></h2>
+                <p>Where do you define parameters in a function?</p>
+
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkQuiz(this, false, 'q1')">Inside { } curly braces</div>
+                    <div class="option-card" onclick="checkQuiz(this, true, 'q1')">Inside ( ) parentheses</div>
+                    <div class="option-card" onclick="checkQuiz(this, false, 'q1')">After the colon :</div>
+                    <div class="option-card" onclick="checkQuiz(this, false, 'q1')">Inside [ ] brackets</div>
+                </div>
+
+                <p id="feedback-q1" style="text-align:center; height:20px; margin-top:15px; font-weight:bold;"></p>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextSlide(2)">Back</button>
+                    <button class="btn btn-primary" id="btn-q1" style="display:none" onclick="nextSlide(4)">Next Question &rarr;</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide4">
+                <h2>Question <span>2 of 3</span></h2>
+                <p>If a function is defined as <code>def add(a, b):</code>, which call is correct?</p>
+
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkQuiz(this, false, 'q2')">add[5, 10]</div>
+                    <div class="option-card" onclick="checkQuiz(this, false, 'q2')">add(5)</div>
+                    <div class="option-card" onclick="checkQuiz(this, true, 'q2')">add(5, 10)</div>
+                    <div class="option-card" onclick="checkQuiz(this, false, 'q2')">add 5, 10</div>
+                </div>
+
+                <p id="feedback-q2" style="text-align:center; height:20px; margin-top:15px; font-weight:bold;"></p>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextSlide(3)">Back</button>
+                    <button class="btn btn-primary" id="btn-q2" style="display:none" onclick="nextSlide(5)">Final Challenge &rarr;</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide5">
+                <h2>Final <span>Challenge</span></h2>
+                <p>We need to calculate the area. Fill in the missing parameter name to match the formula.</p>
+
+                <div class="fill-blank-area">
+                    def calculate_area(width, <input type="text" id="final-input" class="code-input" maxlength="6">):<br>
+                    &nbsp;&nbsp; return width * height
+                </div>
+
+                <div style="text-align:center; margin-top: 20px;">
+                    <button class="btn-primary" onclick="checkFinal()">Run Code</button>
+                </div>
+                
+                <p id="feedback-final" style="text-align:center; height:20px; margin-top:15px; font-weight:bold;"></p>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextSlide(4)">Back</button>
+                    <button class="btn btn-primary" id="btn-finish" style="display:none" onclick="finishLevel()">Finish Level</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide6" style="text-align: center; padding: 2rem;">
+                <h1 style="font-size: 4rem; margin-bottom: 1rem;">🎉</h1>
+                <h2>Parameters Mastered!</h2>
+                <p>You can now make your functions flexible and powerful.</p>
+                <p style="color: var(--neon-cyan)">+75 XP Gained</p>
+                <button class="btn btn-primary" onclick="window.location.href='clickable.html'">Back to Path</button>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- NAVIGATION ---
+        function nextSlide(n) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.getElementById('slide'+n).classList.add('active');
+            
+            // Update dots
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((d, index) => {
+                if (index < n) d.classList.add('active');
+                else d.classList.remove('active');
+            });
+        }
+
+        // --- GAME: ROBO PAINTER ---
+        function paintRobot(color) {
+            const robot = document.getElementById('robot');
+            const codeText = document.getElementById('code-param');
+            const btnContinue = document.getElementById('btn-s2');
+
+            // Update Text
+            codeText.textContent = `"${color}"`;
+            codeText.style.color = color === 'gray' ? '#fff' : color;
+
+            // Update Icon
+            if(color === 'red') robot.style.color = '#ff4444';
+            if(color === 'blue') robot.style.color = '#0088ff';
+            if(color === 'green') robot.style.color = '#00ff88';
+
+            // Animation bump
+            robot.style.transform = "scale(1.2)";
+            setTimeout(() => robot.style.transform = "scale(1)", 300);
+
+            // Unlock next
+            btnContinue.disabled = false;
+        }
+
+        // --- QUIZ LOGIC (Questions 1 & 2) ---
+        function checkQuiz(el, isCorrect, qID) {
+            // Reset this question's cards
+            const parent = el.parentElement;
+            parent.querySelectorAll('.option-card').forEach(c => c.classList.remove('correct', 'wrong'));
+            
+            const feedback = document.getElementById('feedback-' + qID);
+            const nextBtn = document.getElementById('btn-' + qID);
+
+            if(isCorrect) {
+                el.classList.add('correct');
+                feedback.textContent = "Correct!";
+                feedback.style.color = "var(--neon-green)";
+                nextBtn.style.display = 'inline-block';
+                // XP Bar boost
+                let width = qID === 'q1' ? "50%" : "75%";
+                document.getElementById('xp-bar').style.width = width;
+            } else {
+                el.classList.add('wrong');
+                feedback.textContent = "Not quite. Try again!";
+                feedback.style.color = "var(--danger)";
+            }
+        }
+
+        // --- FINAL CHALLENGE LOGIC ---
+        function checkFinal() {
+            const val = document.getElementById('final-input').value.toLowerCase().trim();
+            const feedback = document.getElementById('feedback-final');
+            const finishBtn = document.getElementById('btn-finish');
+
+            // The code snippet is `return width * height`. So the missing param must be 'height'.
+            if(val === 'height') {
+                feedback.textContent = "Perfect! The variable name must match the one used inside.";
+                feedback.style.color = "var(--neon-green)";
+                finishBtn.style.display = 'inline-block';
+                document.getElementById('xp-bar').style.width = "100%";
+            } else {
+                feedback.textContent = "Error: Name 'height' is not defined. Try checking the return statement.";
+                feedback.style.color = "var(--danger)";
+            }
+        }
+
+        function finishLevel() {
+            nextSlide(6);
+            document.querySelector('.progress-dots').style.opacity = '0';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT | Cognitive Synchronization v2</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --neon-green: #39ff14;
+            --neon-purple: #d300ff;
+            --neon-blue: #00e5ff;
+            --bg-black: #050505;
+            --glass: rgba(10, 10, 10, 0.90);
+            --font-title: 'Orbitron', sans-serif;
+            --font-body: 'Roboto Mono', monospace;
+        }
+
+        body {
+            /* BACKGROUND IMAGE HERE */
+            background: url('2644830.jpg') no-repeat center center fixed;
+            background-size: cover;
+            color: var(--neon-green);
+            font-family: var(--font-body);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        /* Scanline overlay */
+        body::after {
+            content: "";
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: repeating-linear-gradient(0deg, rgba(0,0,0,0.1) 0px, rgba(0,0,0,0.1) 1px, transparent 1px, transparent 2px);
+            pointer-events: none; z-index: 1;
+        }
+
+        .container {
+            width: 800px;
+            background: var(--glass);
+            border: 3px solid var(--neon-purple);
+            box-shadow: 0 0 30px var(--neon-purple), inset 0 0 20px rgba(211, 0, 255, 0.2);
+            padding: 50px;
+            border-radius: 15px;
+            z-index: 2;
+            position: relative;
+            backdrop-filter: blur(5px);
+        }
+
+        h1 { 
+            font-family: var(--font-title); text-align: center; 
+            text-shadow: 0 0 15px var(--neon-green); margin-bottom: 40px; font-size: 2.5rem; 
+            letter-spacing: 2px;
+        }
+        h2 { 
+            font-family: var(--font-title); color: var(--neon-blue); 
+            border-bottom: 2px solid var(--neon-blue); padding-bottom: 15px; margin-top: 0;
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        .step { display: none; animation: slideIn 0.6s cubic-bezier(0.23, 1, 0.32, 1); }
+        .step.active { display: block; }
+
+        /* --- BIGGER TEXT BOXES & INPUTS --- */
+        input[type="text"], input[type="number"], textarea {
+            background: rgba(0,0,0,0.6);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 15px 20px;
+            font-family: var(--font-body);
+            font-size: 1.3rem;
+            width: 90%;
+            border-radius: 5px;
+            transition: 0.3s;
+            box-shadow: 0 0 10px rgba(57, 255, 20, 0.2);
+        }
+        textarea { height: 150px; }
+        input:focus, textarea:focus {
+            outline: none; box-shadow: 0 0 25px var(--neon-green); border-color: white;
+        }
+
+        /* Gamified Buttons */
+        .btn {
+            background: transparent;
+            border: 2px solid var(--neon-purple); color: var(--neon-purple);
+            padding: 15px 30px; font-family: var(--font-title);
+            font-size: 1.1rem; font-weight: bold; cursor: pointer;
+            transition: 0.3s; margin-top: 30px; text-transform: uppercase; letter-spacing: 1px;
+            position: relative; overflow: hidden;
+        }
+        .btn:hover { 
+            background: var(--neon-purple); color: white; box-shadow: 0 0 30px var(--neon-purple); 
+        }
+
+        /* Option Cards */
+        .option-card {
+            background: rgba(255,255,255,0.05); border: 1px solid var(--neon-blue);
+            padding: 20px; margin: 15px 0; cursor: pointer; transition: 0.3s; font-size: 1.1rem;
+            display: flex; align-items: center;
+        }
+        .option-card:before { content: "[ ]"; margin-right: 15px; color: var(--neon-blue); }
+        .option-card:hover, .option-card.selected {
+            border-color: var(--neon-green); background: rgba(57, 255, 20, 0.15); box-shadow: 0 0 15px var(--neon-green);
+        }
+        .option-card.selected:before { content: "[X]"; color: var(--neon-green); }
+
+        /* Sliders */
+        .slider-container { margin: 30px 0; }
+        input[type=range] { width: 100%; -webkit-appearance: none; background: transparent; }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%; height: 10px; background: #333; border: 1px solid var(--neon-blue);
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 25px; width: 25px; background: var(--neon-green);
+            margin-top: -8px; box-shadow: 0 0 15px var(--neon-green); cursor: pointer;
+        }
+
+        pre { background: #111; padding: 20px; border-left: 4px solid var(--neon-purple); color: #eee; font-size: 1.1rem; }
+
+        .loader {
+            border: 5px solid #111; border-top: 5px solid var(--neon-green);
+            border-radius: 50%; width: 60px; height: 60px;
+            animation: spin 1s linear infinite; margin: 30px auto;
+        }
+
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .stat-box { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 30px; }
+        .stat-item { border: 2px solid var(--neon-blue); padding: 25px; text-align: center; background: rgba(0,229,255,0.1); }
+        .stat-val { font-family: var(--font-title); font-size: 2.5em; display: block; margin-top: 10px; text-shadow: 0 0 10px; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1 id="header-title">>> INITIALIZING MINDCRAFT KERNEL</h1>
+
+    <div id="step-0" class="step active">
+        <h2 style="border:none; color: var(--neon-green)">// IDENTITY_CALIBRATION_PROTOCOL</h2>
+        <p>Complete the diagnostic sequence to establish your neural profile.</p>
+        <button class="btn" onclick="nextStep(1)">ENGAGE PROTOCOL</button>
+    </div>
+
+    <div id="step-1" class="step">
+        <h2>QUERY 01/08: DATA ACQUISITION</h2>
+        <p>How do you prefer to download new skills?</p>
+        <div class="option-card" onclick="selectOption(1, 0, this)">A) Access Documentation Database (Theory)</div>
+        <div class="option-card" onclick="selectOption(1, 1, this)">B) Observe Visual Uplink (Video Demo)</div>
+        <div class="option-card" onclick="selectOption(1, 2, this)">C) Direct Neural Interface (Hands-on)</div>
+    </div>
+
+    <div id="step-2" class="step">
+        <h2>QUERY 02/08: ERROR RESOLUTION</h2>
+        <p>System Failure Detected. Response?</p>
+        <div class="option-card" onclick="selectOption(2, 0, this)">A) Analyze Error Logs (Analytical)</div>
+        <div class="option-card" onclick="selectOption(2, 1, this)">B) Rapid Variable Injection (Trial & Error)</div>
+        <div class="option-card" onclick="selectOption(2, 2, this)">C) Request AI Assistance (Guided)</div>
+    </div>
+
+    <div id="step-3" class="step">
+        <h2>QUERY 03/08: INTERFACE PREFERENCE</h2>
+        <p>Preferred visualization format:</p>
+        <div class="option-card" onclick="selectOption(3, 0, this)">A) Schematics & Flowcharts (Visual)</div>
+        <div class="option-card" onclick="selectOption(3, 1, this)">B) Raw Source Code (Example)</div>
+        <div class="option-card" onclick="selectOption(3, 2, this)">C) Textual Directives (Reading)</div>
+    </div>
+
+    <div id="step-4" class="step">
+        <h2>QUERY 04/08: PROCESSING SPEED</h2>
+        <p>Set simulation velocity:</p>
+        <div class="slider-container">
+            <input type="range" min="0" max="1" step="1" value="0" id="pace-slider" oninput="updateSliderUI('pace-val', this.value, ['SLOW & METHODICAL', 'FAST & FURIOUS'])">
+            <p style="text-align: center; color: var(--neon-blue)">> <span id="pace-val">SLOW & METHODICAL</span> <</p>
+        </div>
+        <button class="btn" onclick="saveSlider(4, 'pace-slider')">CONFIRM SPEED</button>
+    </div>
+
+    <div id="step-5" class="step">
+        <h2>QUERY 05/08: GRIND TOLERANCE</h2>
+        <p>Will you perform repetitive tasks?</p>
+        <div class="option-card" onclick="selectOption(5, 1, this)">A) NEGATIVE. Give me novel challenges.</div>
+        <div class="option-card" onclick="selectOption(5, 0, this)">B) AFFIRMATIVE. Grind for mastery.</div>
+    </div>
+
+    <div id="step-6" class="step">
+        <h2>QUERY 06/08: CURRENT POWER LEVEL</h2>
+        <p>Self-assess Python capabilities (1-5):</p>
+        <div class="slider-container">
+            <input type="range" min="1" max="5" step="1" value="3" id="skill-slider" oninput="updateSliderUI('skill-val', this.value)">
+            <p style="text-align: center; font-size: 2rem; color: var(--neon-green)">LEVEL: <span id="skill-val">3</span></p>
+        </div>
+        <button class="btn" onclick="saveSlider(6, 'skill-slider')">REGISTER LEVEL</button>
+    </div>
+
+    <div id="step-7" class="step">
+        <h2>QUERY 07/08: LOGIC CORE TRACE</h2>
+        <p>Analyze sequence. Predict final output of X.</p>
+        <pre>
+x = 10
+for i in range(2):
+    x = x + 5
+x = x * 2
+print(x)</pre>
+        <input type="number" id="trace-input" placeholder="ENTER NUMERIC VALUE..." autofocus>
+        <br>
+        <button class="btn" onclick="submitTrace()">TRANSMIT CALCULATION</button>
+    </div>
+
+    <div id="step-8" class="step">
+        <h2>QUERY 08/08: DEBUG SIMULATION</h2>
+        <p>Fix the syntax to ignite the engines.</p>
+        <textarea id="code-editor" spellcheck="false">
+def ignite_engine():
+    fuel = 100
+    if fuel > 50
+        print("IGNITION SUCCESSFUL")
+</textarea>
+        <br>
+        <div style="margin-top:20px; display: flex; gap: 20px;">
+            <button class="btn" style="flex:2;" onclick="runDebug()">> EXECUTE CODE</button>
+            <button class="btn" style="flex:1; border-color: #ff3333; color: #ff3333;" onclick="askHint()">? HINT</button>
+        </div>
+        <div id="console-output" style="margin-top:20px; padding: 15px; background: #000; border: 1px solid #333; color: #ff3333; min-height: 30px; font-family: 'Courier New';"></div>
+    </div>
+
+    <div id="step-9" class="step" style="text-align: center;">
+        <h2>// UPLOADING TELEMETRY</h2>
+        <div class="loader"></div>
+        <p>Neural Net Inference in progress...</p>
+    </div>
+
+    <div id="step-10" class="step">
+        <h2 style="color:var(--neon-green); text-align: center;">>> PROFILE ESTABLISHED</h2>
+        <div class="stat-box">
+            <div class="stat-item">
+                <span>ASSIGNED CLASS</span>
+                <span class="stat-val" id="result-profile" style="color:var(--neon-purple)">TBD</span>
+            </div>
+            <div class="stat-item">
+                <span>MATCH CONFIDENCE</span>
+                <span class="stat-val" id="result-conf" style="color:var(--neon-blue)">0%</span>
+            </div>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 25px; margin-top: 30px; border-left: 4px solid var(--neon-green);">
+            <h3 style="margin-top:0; color: var(--neon-blue)">// TACTICAL ANALYSIS</h3>
+            <p id="profile-desc" style="line-height: 1.6; font-size: 1.1rem;"></p>
+        </div>
+        <button class="btn" style="width: 100%; margin-top: 30px;" onclick="location.reload()">REBOOT SYSTEM</button>
+    </div>
+
+</div>
+
+<script>
+    let playerData = { s1:0, s2:0, s3:0, s4:0, s5:0, s6:3, trace_time:0, trace_correct:0, debug_runs:0, hint_used:0 };
+    let timerStart = 0;
+
+    function nextStep(n) {
+        document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+        let target = document.getElementById('step-' + n);
+        
+        if (!target) {
+            alert("SYSTEM ERROR: Missing Step " + n + ". Check HTML integrity.");
+            return;
+        }
+        
+        target.classList.add('active');
+        if(n === 7) { timerStart = Date.now(); document.getElementById('trace-input').focus(); }
+    }
+
+    function selectOption(qNum, val, element) {
+        element.parentNode.querySelectorAll('.option-card').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+        playerData['s'+qNum] = val;
+        setTimeout(() => nextStep(qNum + 1), 300);
+    }
+
+    function updateSliderUI(spanId, val, labels=null) {
+        document.getElementById(spanId).innerText = labels ? labels[val] : val;
+    }
+
+    function saveSlider(qNum, inputId) {
+        playerData['s'+qNum] = document.getElementById(inputId).value;
+        nextStep(qNum + 1);
+    }
+
+    function submitTrace() {
+        let val = document.getElementById('trace-input').value;
+        playerData.trace_time = (Date.now() - timerStart) / 1000;
+        playerData.trace_correct = (val == 40) ? 1 : 0;
+        nextStep(8);
+    }
+
+    function runDebug() {
+        playerData.debug_runs++;
+        let code = document.getElementById('code-editor').value;
+        let output = document.getElementById('console-output');
+        if(code.includes('if fuel > 50:') && code.includes('print("IGNITION SUCCESSFUL")')) {
+            output.style.color = "var(--neon-green)";
+            output.innerHTML = ">> IGNITION SUCCESSFUL";
+            setTimeout(() => finishCalibration(), 1000);
+        } else {
+            output.innerText = ">> ERROR: SyntaxError.";
+        }
+    }
+
+    function askHint() {
+        playerData.hint_used = 1;
+        document.getElementById('console-output').style.color = "yellow";
+        document.getElementById('console-output').innerText = ">> HINT: Missing ':' at end of if statement.";
+    }
+
+    async function finishCalibration() {
+        nextStep(9);
+        try {
+            const response = await fetch('http://127.0.0.1:5000/predict_profile', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(playerData)
+            });
+            const result = await response.json();
+            
+            if(result.status === 'success') {
+                showResult(result);
+            } else {
+                alert("AI Error: " + result.message);
+            }
+        } catch (error) {
+            console.error(error);
+            alert("BROWSER ERROR: " + error.message + "\n(The Server is fine, check the HTML!)");
+        }
+    }
+
+    function showResult(data) {
+        try {
+            document.getElementById('result-profile').innerText = data.profile.toUpperCase();
+            document.getElementById('result-conf').innerText = data.confidence + "%";
+            
+            const descriptions = {
+                "Visual": "You learn by seeing. Unlocking Video Modules.",
+                "Exploratory": "You learn by doing. Unlocking Sandbox Mode.",
+                "Example-Driven": "You learn by patterns. Unlocking Code Templates.",
+                "Repetition-Focused": "You learn by practice. Unlocking Drill Mode."
+            };
+            document.getElementById('profile-desc').innerText = descriptions[data.profile];
+            nextStep(10);
+        } catch(e) {
+            alert("DISPLAY ERROR: " + e.message);
+        }
+    }
+</script>
+</body>
+</html>

@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT: WEB ARCHITECT</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Teko:wght@300;500;700&family=Roboto+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-deep: #050505;
+            --bg-panel: rgba(10, 15, 20, 0.95);
+            --arch-cyan: #00f0ff;
+            --arch-amber: #ff9900;
+            --arch-white: #e0e0e0;
+            --grid-line: rgba(0, 240, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--arch-white);
+            font-family: 'Roboto Mono', monospace;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HUD --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 30px;
+            background: #080808;
+            border-bottom: 2px solid var(--arch-amber);
+            z-index: 100;
+        }
+
+        .logo { font-family: 'Teko', sans-serif; font-size: 2rem; letter-spacing: 2px; text-transform: uppercase; }
+        .logo span { color: var(--arch-cyan); }
+
+        .stats { display: flex; gap: 20px; color: var(--arch-amber); font-weight: bold; }
+        
+        /* --- LAYOUT --- */
+        .main-container {
+            display: flex; height: 100%;
+        }
+
+        /* SIDEBAR (LOGS) */
+        .sidebar {
+            width: 300px; background: var(--bg-panel);
+            border-right: 1px solid #333;
+            display: flex; flex-direction: column;
+            padding: 20px;
+        }
+        .ai-avatar {
+            width: 80px; height: 80px; margin: 0 auto 20px;
+            border: 2px solid var(--arch-cyan); border-radius: 10px;
+            display: flex; justify-content: center; align-items: center;
+            box-shadow: 0 0 15px rgba(0,240,255,0.2);
+            position: relative;
+        }
+        .ai-pulse {
+            width: 40px; height: 4px; background: var(--arch-cyan);
+            animation: pulse-talking 0.5s infinite paused;
+        }
+        .ai-avatar.speaking .ai-pulse { animation-play-state: running; }
+
+        .log-feed {
+            flex: 1; overflow-y: auto; font-size: 0.8rem; color: #888;
+            border-top: 1px solid #333; padding-top: 10px;
+        }
+        .log-entry { margin-bottom: 5px; color: var(--arch-cyan); }
+
+        /* MAIN STAGE */
+        .stage {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            position: relative; padding: 40px;
+        }
+
+        .card {
+            width: 100%; max-width: 900px;
+            background: rgba(10, 10, 15, 0.95);
+            border: 1px solid var(--arch-cyan);
+            border-top: 4px solid var(--arch-cyan);
+            padding: 40px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+            min-height: 600px; display: flex; flex-direction: column;
+            position: relative;
+        }
+        
+        /* --- VISUALS --- */
+        /* API Ping Visual */
+        .server-rack {
+            display: flex; justify-content: space-between; align-items: center;
+            width: 300px; margin: 30px auto; padding: 20px;
+            border: 1px dashed #444; border-radius: 8px;
+        }
+        .device { font-size: 2rem; color: #555; transition: 0.3s; }
+        .packet {
+            width: 10px; height: 10px; background: var(--arch-amber); border-radius: 50%;
+            opacity: 0; transition: 0.5s;
+        }
+        .device.active { color: var(--arch-cyan); text-shadow: 0 0 10px var(--arch-cyan); }
+
+        /* Spider Scraper Visual */
+        .web-grid {
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px;
+            width: 200px; margin: 20px auto; opacity: 0.5;
+        }
+        .web-cell { height: 30px; border: 1px solid #333; background: #111; }
+        .web-cell.target { border-color: var(--arch-amber); background: rgba(255, 153, 0, 0.1); }
+        .spider { font-size: 1.5rem; color: var(--arch-cyan); position: absolute; transition: all 0.5s; opacity: 0; }
+
+        /* Tkinter Window Visual */
+        .gui-mockup {
+            width: 200px; height: 120px; background: #ccc; border: 2px solid #999;
+            margin: 20px auto; color: black; display: flex; flex-direction: column;
+        }
+        .gui-bar { height: 20px; background: #000080; color: white; font-size: 10px; display: flex; align-items: center; padding-left: 5px; }
+        .gui-btn { margin: auto; padding: 5px 10px; background: #ddd; border: 1px solid #888; font-size: 0.8rem; cursor: pointer; }
+        .gui-btn:active { background: #bbb; }
+
+        /* --- THEORY (BLUEPRINTS) --- */
+        .blueprint-grid {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;
+        }
+        .blueprint-box {
+            border: 1px solid #333; padding: 15px; background: rgba(0,0,0,0.3);
+            transition: 0.3s; position: relative;
+        }
+        .blueprint-box:hover { border-color: var(--arch-amber); }
+        .blueprint-box::after {
+            content: ''; position: absolute; top:0; left:0; width: 5px; height: 5px;
+            border-top: 1px solid var(--arch-amber); border-left: 1px solid var(--arch-amber);
+        }
+        .bp-title { color: var(--arch-cyan); font-weight: bold; margin-bottom: 5px; text-transform: uppercase; }
+        .bp-desc { font-size: 0.85rem; color: #aaa; }
+
+        /* --- CONTROLS --- */
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: auto; }
+        .btn-opt {
+            background: transparent; border: 1px solid #444; color: #aaa;
+            padding: 15px; text-align: left; cursor: pointer; font-family: 'Roboto Mono';
+            transition: 0.2s;
+        }
+        .btn-opt:hover { border-color: var(--arch-cyan); color: white; background: rgba(0, 240, 255, 0.05); }
+        .btn-opt.correct { border-color: var(--arch-cyan); background: rgba(0, 240, 255, 0.2); color: var(--arch-cyan); }
+        .btn-opt.wrong { border-color: red; color: red; }
+
+        .btn-main {
+            background: var(--arch-amber); border: none; color: black;
+            padding: 10px 30px; font-weight: bold; cursor: pointer;
+            text-transform: uppercase; font-family: 'Teko'; font-size: 1.2rem;
+            margin-top: 20px; align-self: flex-start;
+        }
+        .btn-main:hover { background: #ffaa33; }
+
+        .hidden { display: none !important; }
+
+        .voice-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            background: #111; border: 1px solid var(--arch-cyan);
+            color: var(--arch-cyan); padding: 10px; cursor: pointer;
+        }
+        .voice-btn.off { color: #555; border-color: #555; }
+
+        @keyframes pulse-talking { 0% { height: 4px; } 50% { height: 20px; } 100% { height: 4px; } }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">WEB <span>ARCHITECT</span></div>
+        <div class="stats">
+            <span>XP: <span id="xp-display">0</span></span>
+            <a href="exam.html" style="color:#555; text-decoration:none;">EXIT</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        
+        <div class="sidebar">
+            <div class="ai-avatar" id="ai-avatar">
+                <div class="ai-pulse"></div>
+            </div>
+            <div style="text-align:center; color:var(--arch-cyan); font-weight:bold; margin-bottom:10px;">SYSTEM ARCHITECT</div>
+            <div class="log-feed" id="log-feed">
+                <div class="log-entry">> System Online.</div>
+            </div>
+        </div>
+
+        <div class="stage">
+
+            <div id="slide-intro" class="card" style="justify-content:center; text-align:center;">
+                <i class="fas fa-layer-group" style="font-size: 5rem; color: var(--arch-cyan); margin-bottom: 20px;"></i>
+                <h1 style="font-family: 'Teko'; font-size: 4rem; line-height: 1;">BUILD THE <span style="color:var(--arch-amber)">WEB</span></h1>
+                <p style="color:#888; margin-bottom: 30px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Role: Web Developer (Python)<br>
+                    Stack: Flask/FastAPI, REST APIs, Web Scraping, Tkinter.
+                </p>
+                <div style="display:flex; justify-content:center; gap:20px;">
+                    <button class="btn-main" style="background:transparent; border:1px solid var(--arch-white); color:white;" onclick="openTheory()">VIEW BLUEPRINTS</button>
+                    <button class="btn-main" onclick="startExam()">START CONSTRUCTION</button>
+                </div>
+            </div>
+
+            <div id="slide-theory" class="card hidden">
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding-bottom:10px;">
+                    <h2 style="font-family:'Teko'; font-size:2rem; color:var(--arch-amber)">ARCHITECTURAL BLUEPRINTS</h2>
+                    <button onclick="closeTheory()" style="background:none; border:none; color:white; cursor:pointer;">X</button>
+                </div>
+                
+                <div style="overflow-y:auto; padding-right:10px;">
+                    <p style="color:#aaa; margin-top:10px;">Technical briefing on Python web capabilities.</p>
+
+                    <div class="blueprint-grid">
+                        <div class="blueprint-box">
+                            <div class="bp-title"><i class="fas fa-server"></i> FLASK / FASTAPI</div>
+                            <div class="bp-desc">
+                                Lightweight frameworks for building web backends. 
+                                <br><strong>Flask:</strong> Simple, flexible.
+                                <br><strong>FastAPI:</strong> Modern, high-performance, auto-docs.
+                            </div>
+                        </div>
+                        <div class="blueprint-box">
+                            <div class="bp-title"><i class="fas fa-globe"></i> REST APIs</div>
+                            <div class="bp-desc">
+                                "Representational State Transfer". The standard way systems talk over HTTP using JSON. 
+                                <br>Methods: GET (Read), POST (Create).
+                            </div>
+                        </div>
+                        <div class="blueprint-box">
+                            <div class="bp-title"><i class="fas fa-spider"></i> WEB SCRAPING</div>
+                            <div class="bp-desc">
+                                Automated data extraction from websites.
+                                <br>Tools: <strong>BeautifulSoup</strong> (Parsing HTML), <strong>Selenium</strong> (Browser Automation).
+                            </div>
+                        </div>
+                        <div class="blueprint-box">
+                            <div class="bp-title"><i class="fas fa-window-maximize"></i> TKINTER</div>
+                            <div class="bp-desc">
+                                Python's standard GUI (Graphical User Interface) library. Useful for building desktop apps or internal tools, though less common for modern web.
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn-main" style="width:100%; margin-top:20px;" onclick="startExam()">BEGIN EXAM</button>
+                </div>
+            </div>
+
+            <div id="slide-2" class="card hidden">
+                <h2 style="color:var(--arch-cyan); font-family:'Teko'; font-size:2rem;">MODULE 1: BACKEND ROUTING</h2>
+                <p style="color:#aaa; margin-bottom:20px;">Task: Create a simple API endpoint in Flask that returns "Hello".</p>
+
+                <div style="background:#111; padding:15px; border-left:3px solid var(--arch-amber); font-family:'Courier New'; color:#ddd; margin-bottom:20px;">
+                    from flask import Flask<br>
+                    app = Flask(__name__)<br><br>
+                    <span style="color:var(--arch-cyan)">@app.route("/")</span><br>
+                    def home():<br>
+                    &nbsp;&nbsp; return "Hello"
+                </div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'server')">A) @app.route("/")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'server')">B) app.map("/")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'server')">C) @route.add("/")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'server')">D) def route("/")</button>
+                </div>
+            </div>
+
+            <div id="slide-3" class="card hidden">
+                <h2 style="color:var(--arch-cyan); font-family:'Teko'; font-size:2rem;">MODULE 2: API COMMUNICATION</h2>
+                <p style="color:#aaa; margin-bottom:20px;">Task: Send a GET request to the server. Watch for the 200 OK status.</p>
+
+                <div class="server-rack">
+                    <div class="device" id="client-pc"><i class="fas fa-laptop"></i></div>
+                    <div class="packet" id="api-packet"></div>
+                    <div class="device" id="server-pc"><i class="fas fa-server"></i></div>
+                </div>
+                <div style="text-align:center; color:#555; margin-bottom:20px;" id="api-status">STATUS: IDLE</div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'api')">A) server.push()</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'api')">B) requests.get(url)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'api')">C) http.fetch(url)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'api')">D) api.connect(url)</button>
+                </div>
+            </div>
+
+            <div id="slide-4" class="card hidden">
+                <h2 style="color:var(--arch-cyan); font-family:'Teko'; font-size:2rem;">MODULE 3: DATA EXTRACTION</h2>
+                <p style="color:#aaa; margin-bottom:20px;">Task: Use BeautifulSoup to find the specific data inside a &lt;div&gt;.</p>
+
+                <div style="position:relative; width: 200px; margin:auto;">
+                    <div class="web-grid">
+                        <div class="web-cell"></div><div class="web-cell"></div><div class="web-cell"></div><div class="web-cell"></div>
+                        <div class="web-cell"></div><div class="web-cell target" id="target-cell"></div><div class="web-cell"></div><div class="web-cell"></div>
+                    </div>
+                    <i class="fas fa-spider spider" id="spider-bot" style="top:0; left:0;"></i>
+                </div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'scrape')">A) soup.scan("div")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'scrape')">B) soup.get_html("div")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'scrape')">C) soup.find("div")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'scrape')">D) scrape.tag("div")</button>
+                </div>
+            </div>
+
+            <div id="slide-5" class="card hidden">
+                <h2 style="color:var(--arch-amber); font-family:'Teko'; font-size:2rem;">MODULE 4: LEGACY INTERFACE</h2>
+                <p style="color:#aaa; margin-bottom:20px;">Task: Tkinter requires a main loop to keep the window open. Which command starts it?</p>
+
+                <div class="gui-mockup">
+                    <div class="gui-bar">My App</div>
+                    <div style="flex:1; display:flex;">
+                        <button class="gui-btn">Click Me</button>
+                    </div>
+                </div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'gui')">A) window.show()</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'gui')">B) root.mainloop()</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'gui')">C) app.run_gui()</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'gui')">D) gui.start()</button>
+                </div>
+            </div>
+
+            <div id="slide-6" class="card hidden" style="align-items:center; justify-content:center; text-align:center;">
+                <i class="fas fa-check-circle" style="font-size:5rem; color:var(--arch-cyan); margin-bottom:20px;"></i>
+                <h1 style="font-family:'Teko'; font-size:3rem; margin-bottom:10px;">SYSTEM BUILT</h1>
+                <p style="color:#888; margin-bottom:30px;">All modules functional. API Online. Data Secured.</p>
+                <div style="display:flex; gap:20px;">
+                    <button class="btn-main" onclick="window.location.reload()">REBUILD</button>
+                    <button class="btn-main" style="background:#333; color:white;" onclick="window.location.href='exam.html'">DASHBOARD</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <button class="voice-btn" id="voice-toggle" onclick="toggleVoice()">
+        <i class="fas fa-volume-up"></i>
+    </button>
+
+    <script>
+        let currentSlide = 1;
+        let voiceEnabled = true;
+        let xp = 0;
+        const synth = window.speechSynthesis;
+
+        // --- VOICE ---
+        function speak(text) {
+            if(!voiceEnabled) return;
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1.1; // Slightly faster for efficiency
+            u.pitch = 1.1; // Slightly higher/crisper
+            synth.speak(u);
+            
+            // Log & Animate
+            const log = document.getElementById('log-feed');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerText = "> " + text;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+
+            const avatar = document.getElementById('ai-avatar');
+            avatar.classList.add('speaking');
+            u.onend = () => avatar.classList.remove('speaking');
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('voice-toggle');
+            if(voiceEnabled) {
+                btn.classList.remove('off');
+                speak("Audio systems nominal.");
+            } else {
+                btn.classList.add('off');
+                synth.cancel();
+            }
+        }
+
+        // --- NAV ---
+        function openTheory() {
+            document.getElementById('slide-intro').classList.add('hidden');
+            document.getElementById('slide-theory').classList.remove('hidden');
+            speak("Displaying architectural blueprints. Review components.");
+        }
+
+        function closeTheory() {
+            document.getElementById('slide-theory').classList.add('hidden');
+            document.getElementById('slide-intro').classList.remove('hidden');
+        }
+
+        function startExam() {
+            document.getElementById('slide-intro').classList.add('hidden');
+            document.getElementById('slide-theory').classList.add('hidden');
+            document.getElementById('slide-2').classList.remove('hidden');
+            currentSlide = 2;
+            speak("Module 1: Backend Routing. Define the Flask entry point.");
+        }
+
+        function checkAnswer(btn, isCorrect, type) {
+            // Disable
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.5';
+            });
+            btn.style.opacity = '1';
+
+            if(isCorrect) {
+                btn.classList.add('correct');
+                xp += 100;
+                document.getElementById('xp-display').innerText = xp;
+                speak("Correct. Configuration applied.");
+
+                // FX
+                if(type === 'server') {
+                    // Nothing specific, just simple code check
+                }
+                if(type === 'api') {
+                    const packet = document.getElementById('api-packet');
+                    packet.style.opacity = 1;
+                    packet.style.transform = "translateX(250px)";
+                    document.getElementById('client-pc').classList.add('active');
+                    setTimeout(() => {
+                        document.getElementById('server-pc').classList.add('active');
+                        document.getElementById('api-status').innerText = "200 OK";
+                        document.getElementById('api-status').style.color = "var(--arch-cyan)";
+                    }, 500);
+                }
+                if(type === 'scrape') {
+                    const spider = document.getElementById('spider-bot');
+                    spider.style.opacity = 1;
+                    spider.style.top = "35px"; // Rough placement for target
+                    spider.style.left = "55px";
+                }
+                if(type === 'gui') {
+                    // GUI Mockup pulse
+                }
+
+                // Next
+                setTimeout(() => {
+                    document.getElementById('slide-'+currentSlide).classList.add('hidden');
+                    currentSlide++;
+                    document.getElementById('slide-'+currentSlide).classList.remove('hidden');
+
+                    if(currentSlide === 3) speak("Module 2: API Communication. Establish connection.");
+                    if(currentSlide === 4) speak("Module 3: Data Extraction. Deploy the scraper.");
+                    if(currentSlide === 5) speak("Module 4: Legacy Systems. Initialize Tkinter loop.");
+                    if(currentSlide === 6) speak("Construction complete. System operational.");
+
+                }, 2000);
+
+            } else {
+                btn.classList.add('wrong');
+                speak("Error. Invalid configuration. Retrying...");
+                setTimeout(() => {
+                    Array.from(parent.children).forEach(c => {
+                        c.style.pointerEvents = 'auto';
+                        c.style.opacity = '1';
+                        c.classList.remove('wrong');
+                    });
+                }, 1500);
+            }
+        }
+    </script>
+</body>
+</html>

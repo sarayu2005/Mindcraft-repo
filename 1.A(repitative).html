@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Array Dojo: Infinite Drills</title>
+    <style>
+        /* --- NEON DOJO THEME --- */
+        :root {
+            --bg: #09090b;
+            --card: #121214;
+            --neon-purple: #ab47bc;
+            --neon-blue: #29b6f6;
+            --neon-green: #66bb6a;
+            --neon-red: #ef5350;
+            --text: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            overflow: hidden; /* Keep focus tight */
+        }
+
+        /* --- SCOREBOARD --- */
+        .hud {
+            display: flex;
+            gap: 40px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .streak-box {
+            color: var(--neon-blue);
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+
+        /* --- MAIN CARD --- */
+        .dojo-card {
+            background: var(--card);
+            border: 2px solid #333;
+            border-radius: 20px;
+            padding: 40px;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+            transition: 0.3s;
+        }
+
+        /* --- THE VISUAL ARRAY --- */
+        .array-display {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 20px;
+            background: rgba(255,255,255,0.03);
+            border-radius: 10px;
+            border: 1px dashed #444;
+        }
+
+        .array-item {
+            width: 60px;
+            height: 60px;
+            background: #000;
+            border: 2px solid var(--neon-purple);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            position: relative;
+            box-shadow: 0 0 10px rgba(171, 71, 188, 0.2);
+        }
+
+        .array-item .index-hint {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.7rem;
+            color: #555;
+            font-family: monospace;
+        }
+
+        /* --- THE QUESTION --- */
+        .question-box {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: #ddd;
+        }
+
+        .code-snippet {
+            background: #000;
+            color: var(--neon-green);
+            padding: 5px 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            border: 1px solid #333;
+        }
+
+        /* --- ANSWER BUTTONS --- */
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid #444;
+            color: #fff;
+            padding: 15px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        button:hover {
+            border-color: var(--neon-blue);
+            background: rgba(41, 182, 246, 0.1);
+        }
+
+        /* --- FEEDBACK ANIMATIONS --- */
+        .correct {
+            border-color: var(--neon-green) !important;
+            background-color: rgba(102, 187, 106, 0.2) !important;
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+
+        .wrong {
+            border-color: var(--neon-red) !important;
+            background-color: rgba(239, 83, 80, 0.2) !important;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        .feedback-text {
+            height: 20px;
+            margin-top: 15px;
+            font-weight: bold;
+            font-size: 0.9rem;
+            letter-spacing: 1px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="hud">
+        <div class="streak-box">STREAK: <span id="streakDisplay">0</span> 🔥</div>
+    </div>
+
+    <div class="dojo-card" id="card">
+        <h3>Current Array (List):</h3>
+        
+        <div class="array-display" id="visualArray">
+            </div>
+
+        <div class="question-box" id="questionText">
+            What is output of <span class="code-snippet">list[0]</span>?
+        </div>
+
+        <div class="options-grid" id="optionsContainer">
+            </div>
+
+        <div class="feedback-text" id="feedback"></div>
+    </div>
+
+    <script>
+        // --- DATA POOL ---
+        const emojis = ["🍎", "🍌", "🍒", "🍇", "🍉", "🥥", "🥝", "🥑"];
+        let currentList = [];
+        let currentAnswer = "";
+        let streak = 0;
+
+        // --- GAME LOGIC ---
+
+        function generateRound() {
+            // 1. Create a random list of 3 to 5 items
+            const length = Math.floor(Math.random() * 3) + 3; // 3, 4, or 5
+            currentList = [];
+            
+            // Shuffle emojis to get random items
+            const shuffled = [...emojis].sort(() => 0.5 - Math.random());
+            currentList = shuffled.slice(0, length);
+
+            // 2. Render the Array visually
+            const visualContainer = document.getElementById('visualArray');
+            visualContainer.innerHTML = '';
+            
+            currentList.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'array-item';
+                div.innerHTML = `${item} <span class="index-hint">${index}</span>`;
+                visualContainer.appendChild(div);
+            });
+
+            // 3. Generate a Random Question Type
+            // Types: 0 = Positive Index, 1 = Negative Index, 2 = Length
+            const qType = Math.floor(Math.random() * 3);
+            let questionHtml = "";
+            
+            if (qType === 0) {
+                // Positive Index (e.g., list[1])
+                const idx = Math.floor(Math.random() * currentList.length);
+                questionHtml = `Find <span class="code-snippet">list[${idx}]</span>`;
+                currentAnswer = currentList[idx];
+            } 
+            else if (qType === 1) {
+                // Negative Index (e.g., list[-1])
+                const idx = Math.floor(Math.random() * currentList.length) + 1; // 1 to length
+                questionHtml = `Find <span class="code-snippet">list[-${idx}]</span>`;
+                currentAnswer = currentList[currentList.length - idx];
+            } 
+            else {
+                // Length (e.g., len(list))
+                questionHtml = `Calculate <span class="code-snippet">len(list)</span>`;
+                currentAnswer = currentList.length.toString();
+            }
+
+            document.getElementById('questionText').innerHTML = questionHtml;
+
+            // 4. Generate Options (1 Correct + 2 Wrong)
+            let options = [currentAnswer];
+            
+            while(options.length < 3) {
+                // Pick random distractions
+                let distraction;
+                if(qType === 2) {
+                    // If asking length, give number distractions
+                    distraction = (Math.floor(Math.random() * 5) + 1).toString();
+                } else {
+                    // If asking item, give emoji distractions
+                    distraction = emojis[Math.floor(Math.random() * emojis.length)];
+                }
+                
+                if(!options.includes(distraction)) {
+                    options.push(distraction);
+                }
+            }
+
+            // Shuffle options
+            options.sort(() => 0.5 - Math.random());
+
+            // Render Buttons
+            const btnContainer = document.getElementById('optionsContainer');
+            btnContainer.innerHTML = '';
+            
+            options.forEach(opt => {
+                const btn = document.createElement('button');
+                btn.innerText = opt;
+                btn.onclick = () => checkAnswer(opt, btn);
+                btnContainer.appendChild(btn);
+            });
+
+            // Clear feedback
+            document.getElementById('feedback').innerText = "";
+            document.getElementById('feedback').style.color = "#fff";
+        }
+
+        function checkAnswer(selected, btnElement) {
+            // Disable all buttons to prevent double clicking
+            const allBtns = document.querySelectorAll('#optionsContainer button');
+            allBtns.forEach(b => b.disabled = true);
+
+            if (selected === currentAnswer) {
+                // CORRECT
+                streak++;
+                document.getElementById('streakDisplay').innerText = streak;
+                btnElement.classList.add('correct');
+                document.getElementById('feedback').innerText = "CORRECT! LOADING NEXT...";
+                document.getElementById('feedback').style.color = "var(--neon-green)";
+                
+                setTimeout(generateRound, 1000); // Wait 1 sec then next
+            } else {
+                // WRONG
+                streak = 0;
+                document.getElementById('streakDisplay').innerText = streak;
+                btnElement.classList.add('wrong');
+                document.getElementById('feedback').innerText = `WRONG! The answer was ${currentAnswer}`;
+                document.getElementById('feedback').style.color = "var(--neon-red)";
+                
+                setTimeout(generateRound, 2000); // Wait 2 secs then next
+            }
+        }
+
+        // Start the drill
+        generateRound();
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT: AUTOMATION</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@300;600;700&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg-deep: #050505;
+            --bg-panel: rgba(20, 15, 10, 0.95);
+            --ind-amber: #ff9d00;
+            --ind-steel: #607d8b;
+            --ind-white: #e0e0e0;
+            --grid-line: rgba(255, 157, 0, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-deep);
+            /* Industrial grid background */
+            background-image: 
+                linear-gradient(0deg, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--ind-white);
+            font-family: 'Chakra Petch', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- START OVERLAY --- */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 5, 5, 0.98); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .start-btn {
+            background: transparent; border: 2px solid var(--ind-amber); color: var(--ind-amber);
+            padding: 20px 50px; font-size: 1.5rem; font-family: 'Share Tech Mono';
+            cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+            transition: 0.3s; margin-top: 20px;
+            box-shadow: 0 0 20px rgba(255, 157, 0, 0.2);
+        }
+        .start-btn:hover { background: var(--ind-amber); color: black; box-shadow: 0 0 40px var(--ind-amber); }
+
+        /* --- HUD --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 30px;
+            background: #080808;
+            border-bottom: 3px solid var(--ind-amber);
+            z-index: 100;
+        }
+
+        .logo { font-family: 'Share Tech Mono', sans-serif; font-size: 2rem; letter-spacing: 2px; text-transform: uppercase; }
+        .logo span { color: var(--ind-amber); }
+
+        .stats { display: flex; gap: 20px; color: var(--ind-steel); font-weight: bold; align-items: center; }
+        .xp-bar-bg { width: 150px; height: 10px; background: #333; border: 1px solid #555; skewX(-20deg); }
+        .xp-fill { width: 0%; height: 100%; background: var(--ind-amber); transition: width 0.5s; }
+
+        /* --- LAYOUT --- */
+        .main-container {
+            display: flex; height: 100%;
+        }
+
+        /* SIDEBAR (CONTROLLER) */
+        .sidebar {
+            width: 300px; background: var(--bg-panel);
+            border-right: 1px solid #333;
+            display: flex; flex-direction: column;
+            padding: 20px;
+        }
+        
+        .gear-container {
+            width: 120px; height: 120px; margin: 0 auto 20px;
+            position: relative; display: flex; justify-content: center; align-items: center;
+        }
+        .gear-outer { font-size: 5rem; color: #333; animation: spin-slow 10s linear infinite; position: absolute; }
+        .gear-inner { font-size: 3rem; color: var(--ind-amber); animation: spin-rev 5s linear infinite; position: absolute; }
+        
+        .log-feed {
+            flex: 1; overflow-y: auto; font-family: 'Share Tech Mono'; font-size: 0.9rem; color: var(--ind-steel);
+            border-top: 1px solid #333; padding-top: 10px; margin-top: 20px;
+        }
+        .log-entry { margin-bottom: 5px; border-left: 2px solid var(--ind-amber); padding-left: 10px; opacity: 0; animation: slideIn 0.3s forwards; }
+
+        /* MAIN STAGE */
+        .stage {
+            flex: 1; display: flex; justify-content: center; align-items: center;
+            position: relative; padding: 40px;
+        }
+
+        .card {
+            width: 100%; max-width: 900px;
+            background: rgba(15, 12, 10, 0.95);
+            border: 2px solid var(--ind-amber);
+            padding: 40px;
+            box-shadow: 0 0 50px rgba(255, 157, 0, 0.1);
+            min-height: 600px; display: flex; flex-direction: column;
+            position: relative;
+            clip-path: polygon(
+                0 0, 100% 0, 100% calc(100% - 30px), 
+                calc(100% - 30px) 100%, 0 100%
+            );
+        }
+
+        /* --- VISUALS --- */
+        /* File Sorter Visual */
+        .file-system {
+            display: flex; justify-content: space-around; width: 100%; margin: 30px 0;
+            background: rgba(0,0,0,0.3); padding: 20px; border-radius: 8px; position: relative;
+        }
+        .folder { width: 80px; height: 70px; background: #333; border-top: 4px solid #555; position: relative; display: flex; justify-content: center; align-items: center; color: #777; font-size: 0.8rem; }
+        .folder::before { content: ''; position: absolute; top: -10px; left: 0; width: 30px; height: 10px; background: #333; }
+        .folder.target-img { border-color: var(--ind-amber); color: var(--ind-amber); }
+        
+        .file-icon {
+            font-size: 2rem; color: white; position: absolute; top: 35%; left: 10%;
+            transition: all 1s ease-in-out;
+        }
+
+        /* Cron Gear Visual */
+        .scheduler-ui {
+            width: 300px; height: 100px; border: 1px solid #444; margin: 20px auto;
+            display: flex; align-items: center; justify-content: center; gap: 20px;
+            background: #111; font-family: 'Share Tech Mono'; font-size: 1.5rem; color: var(--ind-amber);
+        }
+        .status-light { width: 15px; height: 15px; background: #333; border-radius: 50%; }
+        .status-light.on { background: var(--ind-amber); box-shadow: 0 0 10px var(--ind-amber); }
+
+        /* Terminal Visual */
+        .terminal-box {
+            background: black; padding: 15px; font-family: 'Courier New'; font-size: 0.9rem; color: #ccc;
+            border-left: 3px solid var(--ind-amber); margin-bottom: 20px; min-height: 80px;
+        }
+
+        /* --- THEORY MANUAL --- */
+        .manual-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .manual-entry { border: 1px solid #444; padding: 15px; background: rgba(255,157,0,0.05); transition: 0.3s; }
+        .manual-entry:hover { border-color: var(--ind-amber); background: rgba(255,157,0,0.1); }
+        .manual-header { color: var(--ind-amber); font-weight: bold; border-bottom: 1px solid #333; margin-bottom: 5px; }
+
+        /* --- CONTROLS --- */
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: auto; }
+        .btn-opt {
+            background: #1a1a1a; border: 1px solid #444; color: #aaa;
+            padding: 15px; text-align: left; cursor: pointer; font-family: 'Share Tech Mono';
+            transition: 0.2s;
+        }
+        .btn-opt:hover { border-color: var(--ind-amber); color: white; }
+        .btn-opt.correct { background: var(--ind-amber); color: black; border-color: var(--ind-amber); font-weight: bold; }
+        .btn-opt.wrong { border-color: red; color: red; opacity: 0.6; }
+
+        .btn-main {
+            background: var(--ind-amber); border: none; color: black;
+            padding: 12px 40px; font-weight: 800; cursor: pointer;
+            text-transform: uppercase; font-family: 'Chakra Petch'; font-size: 1.2rem;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: 0.3s;
+        }
+        .btn-main:hover { transform: scale(1.05); box-shadow: 0 0 20px rgba(255,157,0,0.5); }
+
+        .hidden { display: none !important; }
+        
+        .voice-btn {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px; background: #111; border: 1px solid var(--ind-amber);
+            color: var(--ind-amber); display:flex; justify-content:center; align-items:center; cursor: pointer;
+        }
+        .voice-btn.off { border-color: #555; color: #555; }
+
+        @keyframes spin-slow { 100% { transform: rotate(360deg); } }
+        @keyframes spin-rev { 100% { transform: rotate(-360deg); } }
+        @keyframes slideIn { from { transform: translateX(-10px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <i class="fas fa-cogs" style="font-size: 4rem; color: var(--ind-amber); margin-bottom: 20px;"></i>
+        <h1 style="font-family: 'Chakra Petch'; font-size: 2.5rem; color:white;">SYSTEM DIAGNOSTIC</h1>
+        <p style="color: #aaa; margin-bottom: 30px;">Initialize Controller Audio Protocol.</p>
+        <button class="start-btn" onclick="initSystem()">START ENGINE</button>
+    </div>
+
+    <nav>
+        <div class="logo">AUTO<span>MATION</span></div>
+        <div class="stats">
+            <span>XP: <span id="xp-display">0</span></span>
+            <a href="exam.html" style="color:white; text-decoration:none;"><i class="fas fa-sign-out-alt"></i> EXIT</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        
+        <div class="sidebar">
+            <div class="gear-container">
+                <i class="fas fa-cog gear-outer"></i>
+                <i class="fas fa-cog gear-inner"></i>
+            </div>
+            <div style="text-align:center; color:var(--ind-amber); font-weight:bold; margin-bottom:10px;">THE CONTROLLER</div>
+            <div class="log-feed" id="log-feed"></div>
+        </div>
+
+        <div class="stage">
+
+            <div id="slide-intro" class="card" style="justify-content:center; text-align:center;">
+                <i class="fas fa-robot" style="font-size: 5rem; color: var(--ind-amber); margin-bottom: 20px;"></i>
+                <h1 style="font-size: 3.5rem; margin-bottom: 10px;">AUTOMATION <span style="color:var(--ind-steel)">ENGINEER</span></h1>
+                <p style="color:#aaa; margin-bottom: 40px; font-size: 1.2rem;">
+                    Focus: Scripting, Task Scheduling, File Ops.<br>
+                    Tools: Python (OS, Shutil, Schedule, Subprocess).
+                </p>
+                <div style="display:flex; justify-content:center; gap:20px;">
+                    <button class="btn-main" style="background:#333; color:white; border:1px solid #555;" onclick="openManual()">READ MANUAL</button>
+                    <button class="btn-main" onclick="startExam()">EXECUTE</button>
+                </div>
+            </div>
+
+            <div id="slide-manual" class="card hidden">
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--ind-amber); padding-bottom:10px;">
+                    <h2 style="color:var(--ind-amber);">OPERATIONS MANUAL</h2>
+                    <button onclick="closeManual()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">X</button>
+                </div>
+                
+                <div style="overflow-y:auto; padding-right:10px;">
+                    <div class="manual-grid">
+                        <div class="manual-entry">
+                            <div class="manual-header">WHAT IS AUTOMATION?</div>
+                            <div>Replacing manual, repetitive digital tasks with scripts that run automatically. "If you do it twice, automate it."</div>
+                        </div>
+                        <div class="manual-entry">
+                            <div class="manual-header">FILE OPERATIONS</div>
+                            <div>Using the <code>os</code> and <code>shutil</code> libraries to create, move, rename, and delete files programmatically.</div>
+                        </div>
+                        <div class="manual-entry">
+                            <div class="manual-header">SCHEDULING</div>
+                            <div>Running scripts at specific times using Cron (Linux) or Python's <code>schedule</code> library.</div>
+                        </div>
+                        <div class="manual-entry">
+                            <div class="manual-header">SYSTEM COMMANDS</div>
+                            <div>Using <code>subprocess</code> to run shell commands (like git pulls or server restarts) from within Python.</div>
+                        </div>
+                    </div>
+                    <div style="text-align:center; margin-top:30px;">
+                        <button class="btn-main" onclick="startExam()">INITIALIZE PROTOCOL</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="slide-2" class="card hidden">
+                <h2 style="color:var(--ind-amber);">TASK 1: FILE SORTING</h2>
+                <p style="color:#ccc; margin-bottom:20px;">Objective: Move the 'report.png' file into the 'Images' folder.</p>
+
+                <div class="file-system">
+                    <div class="folder">DOCS</div>
+                    <div class="folder target-img" id="folder-img">IMAGES</div>
+                    <div class="folder">LOGS</div>
+                    <i class="fas fa-file-image file-icon" id="moving-file"></i>
+                </div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'file')">A) os.delete('report.png')</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'file')">B) shutil.move('report.png', 'Images/')</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'file')">C) os.copy('report.png')</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'file')">D) file.send('Images')</button>
+                </div>
+            </div>
+
+            <div id="slide-3" class="card hidden">
+                <h2 style="color:var(--ind-amber);">TASK 2: SCHEDULING</h2>
+                <p style="color:#ccc; margin-bottom:20px;">Objective: Run the 'backup' job every day at 10:30.</p>
+
+                <div class="scheduler-ui">
+                    <div class="status-light" id="sched-light"></div>
+                    <span>10:30 AM</span>
+                    <i class="fas fa-history"></i>
+                </div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'time')">A) schedule.now(job)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'time')">B) schedule.every().day.at("10:30").do(job)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'time')">C) time.sleep(10:30)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'time')">D) run.daily(job)</button>
+                </div>
+            </div>
+
+            <div id="slide-4" class="card hidden">
+                <h2 style="color:var(--ind-amber);">TASK 3: SHELL COMMANDS</h2>
+                <p style="color:#ccc; margin-bottom:20px;">Objective: List all files in the current directory using a shell command.</p>
+
+                <div class="terminal-box" id="term-output">
+                    user@system:~$ _
+                </div>
+
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'shell')">A) subprocess.run(["ls", "-l"])</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'shell')">B) os.print_files()</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'shell')">C) shell.execute("list")</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'shell')">D) sys.get_files()</button>
+                </div>
+            </div>
+
+            <div id="slide-5" class="card hidden" style="align-items:center; justify-content:center; text-align:center;">
+                <i class="fas fa-cogs" style="font-size:5rem; color:var(--ind-amber); margin-bottom:20px;"></i>
+                <h1 style="font-family:'Chakra Petch'; font-size:3rem; margin-bottom:10px;">SYSTEM <span style="color:var(--ind-steel)">OPTIMIZED</span></h1>
+                <p style="color:#aaa; margin-bottom:30px;">All workflows automated. Efficiency increased by 400%.</p>
+                <div style="display:flex; gap:20px;">
+                    <button class="btn-main" style="background:#333; color:white;" onclick="window.location.reload()">RESET</button>
+                    <button class="btn-main" onclick="window.location.href='exam.html'">DASHBOARD</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="voice-btn" id="voice-toggle" onclick="toggleVoice()"><i class="fas fa-volume-up"></i></div>
+
+    <script>
+        let currentSlide = 1;
+        let voiceEnabled = true;
+        let xp = 0;
+        const synth = window.speechSynthesis;
+        let voices = [];
+
+        function initSystem() {
+            document.getElementById('start-overlay').style.display = 'none';
+            voices = synth.getVoices();
+            log("System Controller Initialized.");
+            speak("Welcome to the Automation Hub. I am The Controller.");
+        }
+
+        // --- VOICE ---
+        function speak(text) {
+            if(!voiceEnabled) return;
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1.0; 
+            u.pitch = 0.8; // Robotic/Deep
+            
+            // Try to find a robotic voice if available (e.g., Google US English)
+            const preferred = voices.find(v => v.name.includes('Google US English'));
+            if(preferred) u.voice = preferred;
+
+            synth.speak(u);
+            log(text);
+        }
+
+        function log(text) {
+            const feed = document.getElementById('log-feed');
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerText = "> " + text;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('voice-toggle');
+            if(voiceEnabled) {
+                btn.classList.remove('off');
+                speak("Audio output restored.");
+            } else {
+                btn.classList.add('off');
+                synth.cancel();
+            }
+        }
+
+        // --- NAV ---
+        function openManual() {
+            document.getElementById('slide-intro').classList.add('hidden');
+            document.getElementById('slide-manual').classList.remove('hidden');
+            speak("Opening Operations Manual. Review standard procedures.");
+        }
+
+        function closeManual() {
+            document.getElementById('slide-manual').classList.add('hidden');
+            document.getElementById('slide-intro').classList.remove('hidden');
+        }
+
+        function startExam() {
+            document.getElementById('slide-intro').classList.add('hidden');
+            document.getElementById('slide-manual').classList.add('hidden');
+            document.getElementById('slide-2').classList.remove('hidden');
+            currentSlide = 2;
+            speak("Task 1 initiated. Organize the files using the Shutil library.");
+        }
+
+        function checkAnswer(btn, isCorrect, type) {
+            // Disable
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.5';
+            });
+            btn.style.opacity = '1';
+
+            if(isCorrect) {
+                btn.classList.add('correct');
+                xp += 150;
+                document.getElementById('xp-display').innerText = xp;
+                speak("Command accepted. Execution successful.");
+
+                // FX
+                if(type === 'file') {
+                    const file = document.getElementById('moving-file');
+                    // Move visual logic
+                    file.style.left = "45%"; // Approx center of Images folder
+                    file.style.top = "15px";
+                    file.style.transform = "scale(0.8)";
+                }
+                if(type === 'time') {
+                    document.getElementById('sched-light').classList.add('on');
+                }
+                if(type === 'shell') {
+                    const term = document.getElementById('term-output');
+                    term.innerHTML += "<br>file1.txt<br>script.py<br>data.csv";
+                }
+
+                // Next
+                setTimeout(() => {
+                    document.getElementById('slide-'+currentSlide).classList.add('hidden');
+                    currentSlide++;
+                    document.getElementById('slide-'+currentSlide).classList.remove('hidden');
+
+                    if(currentSlide === 3) speak("Task 2. Schedule the backup job for 10:30 AM.");
+                    if(currentSlide === 4) speak("Task 3. Interact with the OS using Subprocess.");
+                    if(currentSlide === 5) speak("All systems nominal. Automation complete.");
+
+                }, 2000);
+
+            } else {
+                btn.classList.add('wrong');
+                speak("Syntax Error. Process failed. Retry.");
+                setTimeout(() => {
+                    Array.from(parent.children).forEach(c => {
+                        c.style.pointerEvents = 'auto';
+                        c.style.opacity = '1';
+                        c.classList.remove('wrong');
+                    });
+                }, 1500);
+            }
+        }
+    </script>
+</body>
+</html>

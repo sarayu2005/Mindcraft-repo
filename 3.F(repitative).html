@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Function Speed Drill</title>
+    <style>
+        /* --- NEON SNIPER PALETTE --- */
+        :root {
+            --bg: #020202;
+            --panel: #0a0a0a;
+            --neon-red: #ff2a2a;
+            --neon-cyan: #00f3ff;
+            --neon-green: #00ff00;
+            --text-main: #fff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+        }
+
+        /* --- HUD --- */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+
+        /* --- MAIN INTERFACE --- */
+        .drill-card {
+            background: var(--panel);
+            border: 2px solid #333;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            padding: 30px;
+            position: relative;
+            box-shadow: 0 0 50px rgba(0,0,0,0.8);
+            text-align: center;
+        }
+
+        /* --- TIMER BAR --- */
+        .timer-container {
+            width: 100%;
+            height: 6px;
+            background: #333;
+            margin-bottom: 20px;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .timer-bar {
+            height: 100%;
+            width: 100%;
+            background: var(--neon-cyan);
+            box-shadow: 0 0 10px var(--neon-cyan);
+            transition: width 0.1s linear;
+        }
+        .timer-bar.critical {
+            background: var(--neon-red);
+            box-shadow: 0 0 15px var(--neon-red);
+        }
+
+        /* --- CODE DISPLAY --- */
+        .code-screen {
+            background: #000;
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 1.3rem;
+            text-align: left;
+            margin-bottom: 20px;
+            color: #ddd;
+            position: relative;
+        }
+        
+        .code-screen::before {
+            content: 'CPU_TASK_MANAGER';
+            position: absolute;
+            top: -10px;
+            right: 10px;
+            background: var(--bg);
+            color: #555;
+            font-size: 0.7rem;
+            padding: 0 5px;
+        }
+
+        .kwd { color: var(--neon-red); font-weight: bold; } /* def, return */
+        .func { color: var(--neon-cyan); } /* function name */
+        .arg { color: var(--neon-green); } /* values */
+
+        .function-call {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed #333;
+            text-align: center;
+            font-size: 1.5rem;
+            color: #fff;
+        }
+
+        /* --- ANSWER GRID --- */
+        .keypad {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 20px;
+            font-size: 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: 0.1s;
+            font-family: 'Consolas', monospace;
+            font-weight: bold;
+        }
+
+        button:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        button:active { transform: scale(0.95); }
+
+        /* --- STATES --- */
+        .correct { background: var(--neon-green) !important; color: #000 !important; box-shadow: 0 0 20px var(--neon-green); }
+        .wrong { background: var(--neon-red) !important; animation: shake 0.3s; }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .game-over-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            display: none;
+            border-radius: 15px;
+        }
+
+        .restart-btn {
+            margin-top: 20px;
+            border-color: var(--neon-cyan);
+            color: var(--neon-cyan);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="hud">
+        <div style="color:var(--neon-green)">SCORE: <span id="score">0</span></div>
+        <div style="color:var(--neon-red)">LEVEL: <span id="level">1</span></div>
+    </div>
+
+    <div class="drill-card">
+        <div class="timer-container">
+            <div class="timer-bar" id="timer"></div>
+        </div>
+
+        <div class="code-screen" id="code-area">
+            </div>
+
+        <div class="keypad" id="keypad">
+            </div>
+
+        <div class="game-over-overlay" id="game-over">
+            <h2 style="color:var(--neon-red); font-size: 2rem; margin:0;">SYSTEM CRASH</h2>
+            <p>CPU Overheated</p>
+            <p>Final Score: <span id="final-score" style="color:var(--neon-green)">0</span></p>
+            <button class="restart-btn" onclick="startGame()">REBOOT SYSTEM</button>
+        </div>
+    </div>
+
+    <script>
+        // --- CONFIG ---
+        const START_TIME = 100; // units
+        let timerValue = START_TIME;
+        let timerInterval;
+        let score = 0;
+        let level = 1;
+        let currentAns = null;
+        let isGameOver = false;
+
+        // --- TEMPLATES ---
+        const templates = [
+            // Level 1: Simple Return
+            {
+                gen: () => {
+                    const val = Math.floor(Math.random() * 10) + 1;
+                    return {
+                        code: `<span class="kwd">def</span> <span class="func">get_num</span>(x):<br>&nbsp;&nbsp;<span class="kwd">return</span> x`,
+                        call: `get_num(<span class="arg">${val}</span>)`,
+                        ans: val
+                    };
+                }
+            },
+            // Level 2: Simple Math (Add)
+            {
+                gen: () => {
+                    const a = Math.floor(Math.random() * 10);
+                    const b = Math.floor(Math.random() * 10);
+                    return {
+                        code: `<span class="kwd">def</span> <span class="func">add</span>(a, b):<br>&nbsp;&nbsp;<span class="kwd">return</span> a + b`,
+                        call: `add(<span class="arg">${a}</span>, <span class="arg">${b}</span>)`,
+                        ans: a + b
+                    };
+                }
+            },
+            // Level 3: Logic (Greater Than)
+            {
+                gen: () => {
+                    const threshold = 5;
+                    const val = Math.floor(Math.random() * 10);
+                    const res = val > threshold;
+                    return {
+                        code: `<span class="kwd">def</span> <span class="func">check</span>(x):<br>&nbsp;&nbsp;<span class="kwd">return</span> x > ${threshold}`,
+                        call: `check(<span class="arg">${val}</span>)`,
+                        ans: res ? "True" : "False"
+                    };
+                }
+            },
+            // Level 4: Multiplication
+            {
+                gen: () => {
+                    const a = Math.floor(Math.random() * 5) + 2;
+                    const b = Math.floor(Math.random() * 5) + 2;
+                    return {
+                        code: `<span class="kwd">def</span> <span class="func">mult</span>(x, y):<br>&nbsp;&nbsp;<span class="kwd">return</span> x * y`,
+                        call: `mult(<span class="arg">${a}</span>, <span class="arg">${b}</span>)`,
+                        ans: a * b
+                    };
+                }
+            }
+        ];
+
+        // --- ENGINE ---
+
+        function startGame() {
+            score = 0;
+            level = 1;
+            isGameOver = false;
+            document.getElementById('game-over').style.display = 'none';
+            document.getElementById('score').innerText = score;
+            document.getElementById('level').innerText = level;
+            nextRound();
+        }
+
+        function nextRound() {
+            if(isGameOver) return;
+
+            // 1. Difficulty Scaling
+            let templateIdx;
+            if (score < 5) templateIdx = 0; // Level 1
+            else if (score < 10) templateIdx = Math.random() > 0.5 ? 0 : 1; // Level 1-2
+            else if (score < 20) templateIdx = Math.floor(Math.random() * 3); // Level 1-3
+            else templateIdx = Math.floor(Math.random() * 4); // All Levels
+
+            // 2. Generate Data
+            const problem = templates[templateIdx].gen();
+            currentAns = problem.ans;
+
+            // 3. Render Code
+            const codeArea = document.getElementById('code-area');
+            codeArea.innerHTML = `
+                ${problem.code}
+                <div class="function-call">
+                    result = ${problem.call}
+                </div>
+            `;
+
+            // 4. Generate Buttons
+            generateButtons(currentAns);
+
+            // 5. Reset Timer (Faster as you go)
+            clearInterval(timerInterval);
+            let speed = 50; // default speed
+            if(score > 10) speed = 30; // faster drain
+            if(score > 20) speed = 20; // panic mode
+
+            timerValue = 100;
+            updateTimerVisual();
+            
+            timerInterval = setInterval(() => {
+                timerValue -= 1;
+                updateTimerVisual();
+                if(timerValue <= 0) triggerGameOver();
+            }, speed);
+        }
+
+        function generateButtons(correct) {
+            const keypad = document.getElementById('keypad');
+            keypad.innerHTML = '';
+            
+            // Create Set for answers to avoid duplicates
+            let answers = new Set();
+            answers.add(correct);
+
+            // Generate wrong answers
+            while(answers.size < 4) {
+                let wrong;
+                if(typeof correct === "number") {
+                    // Number distractors
+                    wrong = correct + Math.floor(Math.random() * 10) - 5;
+                    if(wrong < 0) wrong = 0;
+                } else {
+                    // Boolean distractors (Wait, bool only has 2 options?)
+                    // If boolean, we might only show 2 buttons, or add "None" / "Error" as distractors
+                    wrong = Math.random() > 0.5 ? "True" : "False";
+                    if(answers.size >= 2) wrong = "None"; // Add fake types
+                }
+                if(wrong !== correct) answers.add(wrong);
+            }
+
+            // Shuffle
+            const ansArray = Array.from(answers).sort(() => Math.random() - 0.5);
+
+            ansArray.forEach(val => {
+                const btn = document.createElement('button');
+                btn.innerText = val;
+                btn.onclick = () => checkAnswer(val, btn);
+                keypad.appendChild(btn);
+            });
+        }
+
+        function updateTimerVisual() {
+            const bar = document.getElementById('timer');
+            bar.style.width = timerValue + '%';
+            if(timerValue < 30) bar.classList.add('critical');
+            else bar.classList.remove('critical');
+        }
+
+        function checkAnswer(val, btn) {
+            if(isGameOver) return;
+
+            if(val === currentAns) {
+                // CORRECT
+                score++;
+                document.getElementById('score').innerText = score;
+                // Level Up Logic
+                if(score % 5 === 0) {
+                    level++;
+                    document.getElementById('level').innerText = level;
+                }
+                btn.classList.add('correct');
+                clearInterval(timerInterval); // Stop timer momentarily
+                setTimeout(nextRound, 200); // Quick transition
+            } else {
+                // WRONG
+                btn.classList.add('wrong');
+                // Penalty: Lose time or Game Over? Let's Game Over to be strict
+                clearInterval(timerInterval);
+                triggerGameOver();
+            }
+        }
+
+        function triggerGameOver() {
+            isGameOver = true;
+            document.getElementById('final-score').innerText = score;
+            document.getElementById('game-over').style.display = 'flex';
+        }
+
+        // Start init
+        startGame();
+
+    </script>
+</body>
+</html>

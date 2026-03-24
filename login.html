@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mindcraft Login</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* SAME CSS AS YOUR ORIGINAL */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: url('rm309-aew-001.jpg') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh; width: 100vw;
+      font-family: 'Pixelify Sans', sans-serif;
+      display: flex; flex-direction: column; align-items: center; color: #00ffff;
+    }
+    h1 { margin-top: 50px; font-size: 4rem; color: #00ffff; text-align: center; }
+    .form {
+      margin-top: 80px; background-color: rgba(0, 0, 0, 0.5);
+      padding: 50px; border-radius: 16px; display: flex; flex-direction: column;
+      gap: 25px; width: 400px; box-shadow: 0 0 20px #000;
+    }
+    label { font-size: 1.2rem; color: #00ffff; }
+    input {
+      padding: 12px; border: 2px solid #00ffff; background-color: rgba(0, 0, 0, 0.7);
+      color: #00ffff; border-radius: 8px; font-family: 'Pixelify Sans', sans-serif;
+      font-size: 1rem; transition: border-color 0.3s ease;
+    }
+    input:focus { border-color: #00ffff; outline: none; background-color: rgba(0, 0, 0, 0.85); }
+    .button-group { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+    button {
+      flex: 1; padding: 12px; border: 2px solid #00ffff; background-color: rgba(0, 0, 0, 0.5);
+      color: #00ffff; border-radius: 8px; cursor: pointer; font-family: 'Pixelify Sans', sans-serif;
+      font-size: 1rem; transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    button:hover { background-color: rgba(0, 0, 0, 0.7); transform: scale(1.05); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .message { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; }
+    .success { background-color: rgba(0, 255, 0, 0.2); color: #00ff00; border: 1px solid #00ff00; }
+    .error { background-color: rgba(255, 0, 0, 0.2); color: #ff4444; border: 1px solid #ff4444; }
+  </style>
+</head>
+<body>
+  <h1>Mindcraft</h1>
+  <div class="form">
+    <label for="email">Gmail:</label>
+    <input type="email" id="email" placeholder="Enter your Gmail" required />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Enter your Password" required />
+
+    <div class="button-group">
+      <button id="login">Login</button>
+      <button id="create">Create Account</button>
+    </div>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const messageDiv = document.getElementById('message');
+    const loginBtn = document.getElementById('login');
+
+    function showMessage(text, type) {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+      setTimeout(() => { messageDiv.textContent = ''; messageDiv.className = ''; }, 5000);
+    }
+
+    document.getElementById("create").addEventListener("click", () => {
+      window.location.href = "register.html";
+    });
+
+    document.getElementById("login").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+
+      if (!email || !password) {
+        showMessage('Please fill in both fields', 'error');
+        return;
+      }
+
+      loginBtn.disabled = true;
+      loginBtn.textContent = "Verifying...";
+
+      try {
+        const response = await fetch('/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+            showMessage('Login Successful! Check your email.', 'success');
+            setTimeout(() => {
+                // Redirect to your main app (Streamlit port 8501 as requested)
+                window.location.href = "survey2.html"; 
+            }, 2000);
+        } else {
+            showMessage('Invalid Email or Password', 'error');
+            loginBtn.disabled = false;
+            loginBtn.textContent = "Login";
+        }
+      } catch (error) {
+        console.error(error);
+        showMessage('Server connection failed', 'error');
+        loginBtn.disabled = false;
+        loginBtn.textContent = "Login";
+      }
+    });
+  </script>
+</body>
+</html>

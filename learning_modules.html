@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NEXUS HUB - Learning Modules</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@500;600;700&family=Orbitron:wght@500;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-void: #030305;
+            --glass-panel: rgba(20, 20, 30, 0.6);
+            --glass-border: 1px solid rgba(255, 255, 255, 0.1);
+            
+            /* NEON PALETTE */
+            --neon-purple: #d946ef;
+            --neon-blue: #00f0ff;
+            --neon-green: #00ff9d;
+            --neon-orange: #ff9d00;
+            
+            --text-main: #fff;
+            --text-dim: #8899a6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            background-color: var(--bg-void);
+            font-family: 'Rajdhani', sans-serif;
+            color: var(--text-main);
+            overflow-x: hidden;
+            padding-top: 80px;
+        }
+
+        /* --- BACKGROUND FX --- */
+        .cyber-grid {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1;
+            background-image: 
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            perspective: 1000px;
+            transform: scale(1.1);
+            animation: gridMove 20s linear infinite;
+        }
+        
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 999;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+
+        /* --- NAV --- */
+        nav {
+            position: fixed; top: 0; left: 0; width: 100%; height: 70px;
+            background: rgba(5, 5, 10, 0.9);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 40px; z-index: 1000;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        .nav-brand {
+            font-family: 'Orbitron'; font-size: 1.5rem; letter-spacing: 2px;
+            text-transform: uppercase;
+            background: linear-gradient(90deg, #fff, #888);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+
+        .back-btn {
+            color: var(--text-dim); text-decoration: none; font-size: 1rem;
+            font-family: 'Share Tech Mono'; text-transform: uppercase;
+            display: flex; align-items: center; gap: 10px;
+            transition: 0.3s;
+            padding: 8px 15px; border: 1px solid transparent;
+        }
+        .back-btn:hover { color: #fff; border-color: #fff; text-shadow: 0 0 10px white; box-shadow: 0 0 10px rgba(255,255,255,0.2); }
+
+        /* --- LAYOUT --- */
+        .container { max-width: 1100px; margin: 0 auto; padding: 20px; }
+
+        /* --- SECTIONS --- */
+        .style-section {
+            min-height: 85vh;
+            display: flex; flex-direction: column; justify-content: center;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 80px 0; position: relative;
+        }
+
+        /* Section Headers with "Tech" Look */
+        .header-wrapper {
+            margin-bottom: 50px;
+            position: relative;
+            padding-left: 30px;
+        }
+        .header-wrapper::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 6px;
+            background: var(--section-color);
+            box-shadow: 0 0 15px var(--section-color);
+        }
+
+        .section-title {
+            font-family: 'Orbitron'; font-size: 3.5rem; text-transform: uppercase;
+            color: white; line-height: 1; margin-bottom: 10px;
+            text-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        .section-title span { color: var(--section-color); }
+
+        .section-desc {
+            font-family: 'Share Tech Mono'; font-size: 1.1rem; color: var(--text-dim);
+            letter-spacing: 1px; max-width: 600px;
+        }
+
+        /* --- BUTTONS GRID --- */
+        .topics-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 30px;
+            perspective: 1000px;
+        }
+
+        /* --- HOLOGRAPHIC CARDS (Buttons) --- */
+        .topic-card {
+            background: var(--glass-panel);
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 4px; /* Techy sharp corners */
+            padding: 40px 20px;
+            text-decoration: none; color: white;
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+            position: relative; overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            clip-path: polygon(
+                0 0, 100% 0, 100% calc(100% - 20px), 
+                calc(100% - 20px) 100%, 0 100%
+            );
+        }
+
+        /* Card Icon */
+        .card-icon {
+            font-size: 2.5rem; color: var(--section-color);
+            filter: drop-shadow(0 0 10px var(--section-color));
+            transition: 0.4s;
+        }
+
+        /* Card Text */
+        .topic-name {
+            font-family: 'Orbitron'; font-size: 1.4rem; letter-spacing: 2px;
+            font-weight: 700; z-index: 2;
+        }
+
+        /* Hover Effects */
+        .topic-card::after {
+            content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.05) 50%, transparent 100%);
+            transform: translateX(-100%); transition: 0.5s; z-index: 1;
+        }
+
+        .topic-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            border-color: var(--section-color);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5), inset 0 0 20px rgba(255,255,255,0.05);
+            background: rgba(30, 30, 40, 0.8);
+        }
+
+        .topic-card:hover .card-icon {
+            transform: scale(1.2) rotate(5deg);
+            filter: drop-shadow(0 0 20px var(--section-color));
+        }
+
+        .topic-card:hover::after { transform: translateX(100%); }
+
+        /* --- SECTION SPECIFIC THEMES --- */
+        #visual { --section-color: var(--neon-purple); }
+        #exploratory { --section-color: var(--neon-blue); }
+        #example { --section-color: var(--neon-green); }
+        #repetitive { --section-color: var(--neon-orange); }
+
+        /* Responsive */
+        @media (max-width: 900px) { .topics-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (max-width: 600px) { .topics-grid { grid-template-columns: 1fr; } .section-title { font-size: 2.5rem; } }
+
+        /* Animation */
+        @keyframes gridMove { 0% { transform: translateY(0); } 100% { transform: translateY(50px); } }
+
+    </style>
+</head>
+<body>
+
+    <div class="cyber-grid"></div>
+    <div class="scanline"></div>
+
+    <nav>
+        <div class="nav-brand">NEXUS <span style="color:var(--neon-blue)">HUB</span></div>
+        <a href="select stlye.html" class="back-btn">
+            <i class="fas fa-chevron-left"></i> RETURN
+        </a>
+    </nav>
+
+    <div class="container">
+
+        <section id="visual" class="style-section">
+            <div class="header-wrapper">
+                <h2 class="section-title">VISUAL <span>MODE</span></h2>
+                <p class="section-desc">:// GRAPHICAL_INTERFACE_LOADED<br>Mastery through optical processing and spatial reasoning.</p>
+            </div>
+
+            <div class="topics-grid">
+                <a href="1.A(visual).html" class="topic-card">
+                    <i class="fas fa-cubes card-icon"></i>
+                    <span class="topic-name">ARRAYS</span>
+                </a>
+                
+                <a href="2.L(visual).html" class="topic-card">
+                    <i class="fas fa-stream card-icon"></i>
+                    <span class="topic-name">LISTS</span>
+                </a>
+
+                <a href="3.F(visual).html" class="topic-card">
+                    <i class="fas fa-project-diagram card-icon"></i>
+                    <span class="topic-name">FUNCTIONS</span>
+                </a>
+            </div>
+        </section>
+
+
+        <section id="exploratory" class="style-section">
+            <div class="header-wrapper">
+                <h2 class="section-title">EXPLORER <span>MODE</span></h2>
+                <p class="section-desc">:// SANDBOX_ENVIRONMENT_ACTIVE<br>Discovery through experimentation and error analysis.</p>
+            </div>
+
+            <div class="topics-grid">
+                <a href="1.A(exploratory).html" class="topic-card">
+                    <i class="fas fa-microscope card-icon"></i>
+                    <span class="topic-name">ARRAYS</span>
+                </a>
+                
+                <a href="2.L(Exploratory).html" class="topic-card">
+                    <i class="fas fa-flask card-icon"></i>
+                    <span class="topic-name">LISTS</span>
+                </a>
+
+                <a href="3.F(explatory).html" class="topic-card">
+                    <i class="fas fa-terminal card-icon"></i>
+                    <span class="topic-name">FUNCTIONS</span>
+                </a>
+            </div>
+        </section>
+
+
+        <section id="example" class="style-section">
+            <div class="header-wrapper">
+                <h2 class="section-title">EXAMPLE <span>MODE</span></h2>
+                <p class="section-desc">:// PATTERN_RECOGNITION_ONLINE<br>Learning through case studies and code deconstruction.</p>
+            </div>
+
+            <div class="topics-grid">
+                <a href="1.A(example).html" class="topic-card">
+                    <i class="fas fa-code card-icon"></i>
+                    <span class="topic-name">ARRAYS</span>
+                </a>
+                
+                <a href="2.L(example).html" class="topic-card">
+                    <i class="fas fa-file-code card-icon"></i>
+                    <span class="topic-name">LISTS</span>
+                </a>
+
+                <a href="3.F(example).html" class="topic-card">
+                    <i class="fas fa-laptop-code card-icon"></i>
+                    <span class="topic-name">FUNCTIONS</span>
+                </a>
+            </div>
+        </section>
+
+
+        <section id="repetitive" class="style-section">
+            <div class="header-wrapper">
+                <h2 class="section-title">DRILL <span>MODE</span></h2>
+                <p class="section-desc">:// NEURAL_REINFORCEMENT_READY<br>Mastery through high-frequency repetition and drills.</p>
+            </div>
+
+            <div class="topics-grid">
+                <a href="1.A(repitative).html" class="topic-card">
+                    <i class="fas fa-sync-alt card-icon"></i>
+                    <span class="topic-name">ARRAYS</span>
+                </a>
+                
+                <a href="2.L(repitative).html" class="topic-card">
+                    <i class="fas fa-redo card-icon"></i>
+                    <span class="topic-name">LISTS</span>
+                </a>
+
+                <a href="3.F(repitative).html" class="topic-card">
+                    <i class="fas fa-infinity card-icon"></i>
+                    <span class="topic-name">FUNCTIONS</span>
+                </a>
+            </div>
+        </section>
+
+    </div>
+
+</body>
+</html>

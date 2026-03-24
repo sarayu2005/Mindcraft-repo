@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Quest - Gamified Learning Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* --- EXISTING STYLES --- */
+        .starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at top, #0c1445 0%, #09155b 25%, #000000 70%), radial-gradient(ellipse at bottom, #0c1445 0%, #09155b 25%, #000000 70%), radial-gradient(ellipse at left, #0c1445 0%, #09155b 25%, #000000 70%), radial-gradient(ellipse at right,#0c1445 0%, #09155b 25%, #000000 70%); background-size: 200% 200%, 150% 150%, 180% 180%, 160% 160%; animation: galaxyShift 8s ease-in-out infinite; z-index: 0; }
+        @keyframes galaxyShift { 0%, 100% { background-position: 0% 0%, 100% 100%, 0% 100%, 100% 0%; } 25% { background-position: 100% 0%, 0% 100%, 100% 100%, 0% 0%; } 50% { background-position: 100% 100%, 0% 0%, 100% 0%, 0% 100%; } 75% { background-position: 0% 100%, 100% 0%, 0% 0%, 100% 100%; } }
+        .starfield::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(2px 2px at 20px 30px, #ffffff, transparent), radial-gradient(2px 2px at 40px 70px, #ffffff, transparent), radial-gradient(1px 1px at 90px 40px, #ffffff, transparent), radial-gradient(1px 1px at 130px 80px, #ffffff, transparent), radial-gradient(2px 2px at 160px 30px, #ffffff, transparent); background-repeat: repeat; background-size: 600px 400px; animation: drift 8s linear infinite; }
+        .starfield::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(1px 1px at 100px 200px, #ffffff, transparent), radial-gradient(1px 1px at 200px 100px, #ffffff, transparent), radial-gradient(1px 1px at 350px 300px, #ffffff, transparent), radial-gradient(1px 1px at 500px 50px, #ffffff, transparent), radial-gradient(1px 1px at 25px 150px, #ffffff, transparent); background-repeat: repeat; background-size: 800px 600px; animation: drift 12s linear infinite reverse; }
+        @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-200px); } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; color: white; overflow-x: hidden; }
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .star { position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%; animation: twinkle 2s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
+        .container { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        .header { text-align: center; margin-bottom: 30px; animation: slideDown 0.8s ease-out; }
+        .header h1 { font-size: 3em; margin-bottom: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5); }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+        .game-ui { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 15px; padding: 15px 25px; margin-bottom: 30px; border: 1px solid rgba(255,255,255,0.2); }
+        .player-stats { display: flex; gap: 20px; align-items: center; }
+        .stat-item { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 20px; font-weight: bold; }
+        .xp-bar { width: 200px; height: 10px; background: rgba(255,255,255,0.2); border-radius: 5px; overflow: hidden; }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ffed4a); border-radius: 5px; transition: width 0.3s ease; }
+        .main-content { display: grid; grid-template-columns: 1fr 300px; gap: 30px; align-items: start; }
+        .lesson-panel { background: rgba(8, 29, 93, 0.95); border: 2px solid rgba(64, 224, 255, 0.3); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border-radius: 20px; padding: 30px; border: 1px solid rgba(255,255,255,0.2); animation: slideUp 0.8s ease-out; position: relative; }
+        .lesson-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .lesson-icon { font-size: 2.5em; background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 15px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .lesson-title { font-size: 2em; font-weight: bold; }
+        .lesson-description { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #ffd700; }
+        .code-example { background: rgba(0,0,0,0.4); padding: 20px; border-radius: 12px; margin: 20px 0; font-family: 'Courier New', monospace; position: relative; overflow-x: auto; }
+        .code-example::before { content: "🐍 Python Code"; position: absolute; top: -10px; left: 15px; background: linear-gradient(45deg, #4ecdc4, #44a08d); padding: 5px 12px; border-radius: 8px; font-size: 0.8em; font-weight: bold; }
+        .code-example pre { margin-top: 20px; color: #a8e6cf; }
+        .challenge-section { background: rgba(8, 29, 93, 0.95); border: 2px solid rgba(64, 224, 255, 0.3); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); padding: 25px; border-radius: 15px; margin: 25px 0; border: 2px solid rgba(255,255,255,0.3); }
+        .challenge-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .challenge-title { font-size: 1.5em; font-weight: bold; }
+        .challenge-options { display: grid; gap: 10px; margin: 15px 0; }
+        .option { background: rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 10px; cursor: pointer; transition: all 0.3s ease; border: 2px solid transparent; }
+        .option:hover { background: rgba(255,255,255,0.2); transform: translateX(5px); }
+        .option.selected { border-color: #ffd700; background: rgba(255,215,0,0.2); }
+        .option.correct { border-color: #4caf50; background: rgba(76,175,80,0.2); }
+        .option.incorrect { border-color: #f44336; background: rgba(244,67,54,0.2); }
+        .btn { background: linear-gradient(45deg, #ff6b6b, #ee5a24); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0,0,0,0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .progress-card { background: rgba(8, 29, 93, 0.95); border: 2px solid rgba(64, 224, 255, 0.3); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border-radius: 20px; padding: 25px; border: 1px solid rgba(255,255,255,0.2); }
+        .progress-title { font-size: 1.3em; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .achievement-list { display: flex; flex-direction: column; gap: 10px; }
+        .achievement { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; transition: all 0.3s ease; }
+        .achievement.unlocked { background: rgba(255,215,0,0.2); border: 1px solid #ffd700; }
+        .achievement-icon { font-size: 1.5em; }
+        .achievement-text { flex: 1; }
+        .notification { position: fixed; top: 20px; right: 20px; background: linear-gradient(45deg, #4caf50, #45a049); color: white; padding: 15px 25px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); transform: translateX(400px); transition: transform 0.3s ease; z-index: 1000; }
+        .notification.show { transform: translateX(0); }
+        .lesson-navigation { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .lesson-counter { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; font-weight: bold; }
+        @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes bounce { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+        .bounce { animation: bounce 0.6s; }
+        
+        /* =========================================
+           🆕 NEW STYLES FOR EXIT BUTTON & MODAL 
+           ========================================= */
+        
+        .exit-btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b); /* Red Warning Color */
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exit-btn:hover {
+            box-shadow: 0 5px 20px rgba(255, 75, 43, 0.4);
+        }
+
+        /* Modal Background */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Modal Box */
+        .modal-content {
+            background: rgba(13, 24, 66, 0.95);
+            border: 2px solid #00d4ff;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            animation: popIn 0.3s ease-out;
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .modal-subtitle {
+            margin-bottom: 30px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Specific Button Colors */
+        .btn-level {
+            background: linear-gradient(45deg, #4ecdc4, #556270);
+            border: 1px solid #4ecdc4;
+        }
+        
+        .btn-map {
+            background: linear-gradient(45deg, #a8ff78, #78ffd6);
+            color: #0c1445; /* Dark text for light button */
+            border: 1px solid #a8ff78;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            margin-top: 10px;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.8); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .main-content { grid-template-columns: 1fr; }
+            .game-ui { flex-direction: column; gap: 15px; }
+            .player-stats { flex-wrap: wrap; justify-content: center; }
+            .header h1 { font-size: 2em; }
+        }
+    </style>
+</head>
+<body>
+    <div class="starfield"></div>
+    <div class="stars"></div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🐍 Python Quest</h1>
+            <p>Master Python through Epic Adventures!</p>
+        </div>
+
+        <div class="game-ui">
+            <div class="player-stats">
+                <div class="stat-item"><span>⚡</span><span>Level <span id="player-level">1</span></span></div>
+                <div class="stat-item"><span>🏆</span><span id="player-xp">0</span> XP</div>
+                <div class="stat-item"><span>🎯</span><span id="challenges-completed">0</span>/7 Challenges</div>
+            </div>
+            <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width: 0%"></div></div>
+        </div>
+
+        <div class="main-content">
+            <div class="lesson-panel">
+                <div class="lesson-header">
+                    <div class="lesson-icon">🎭</div>
+                    <div>
+                        <div class="lesson-title">Functions & Parameters</div>
+                        <div>The Magic of Code Spells</div>
+                    </div>
+                </div>
+
+                <div class="lesson-description">
+                    <h3>🎯 The Magic Show Analogy</h3>
+                    <p>Imagine you're a magician with a magic hat. You put a rabbit in (input), say magic words (function), and pull out a dove (output)! That's exactly what functions do in Python.</p>
+                </div>
+
+                <div class="code-example">
+                    <pre>def magic_trick():
+    print("Abracadabra! 🎩✨")
+    print("A rabbit becomes a dove!")
+
+# Cast the spell!
+magic_trick()</pre>
+                </div>
+
+                <div id="challenge-container">
+                    </div>
+
+                <div class="lesson-navigation">
+                    <button class="btn" id="prev-btn" onclick="previousChallenge()" disabled>Previous</button>
+                    <div class="lesson-counter">Challenge <span id="current-challenge">1</span> of <span id="total-challenges">7</span></div>
+                    <button class="btn" id="next-btn" onclick="nextChallenge()">Next Challenge</button>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; padding-top: 10px;">
+                    <button class="btn exit-btn" onclick="showExitModal()">
+                        <span>🚪</span> Exit Quest
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="sidebar">
+                <div class="progress-card">
+                    <div class="progress-title"><span>🏆</span><span>Achievements</span></div>
+                    <div class="achievement-list" id="achievements">
+                        <div class="achievement" data-achievement="first-challenge"><div class="achievement-icon">🎯</div><div class="achievement-text">First Challenge</div></div>
+                        <div class="achievement" data-achievement="speed-demon"><div class="achievement-icon">⚡</div><div class="achievement-text">Speed Demon</div></div>
+                        <div class="achievement" data-achievement="bug-hunter"><div class="achievement-icon">🐛</div><div class="achievement-text">Bug Hunter</div></div>
+                        <div class="achievement" data-achievement="function-master"><div class="achievement-icon">🧙‍♂️</div><div class="achievement-text">Function Master</div></div>
+                        <div class="achievement" data-achievement="boss-slayer"><div class="achievement-icon">🐉</div><div class="achievement-text">Boss Slayer</div></div>
+                    </div>
+                </div>
+
+                <div class="progress-card">
+                    <div class="progress-title"><span>📚</span><span>Learning Path</span></div>
+                    <div style="font-size: 0.9em; line-height: 1.6;">
+                        <p>✅ Variables & Data Types</p>
+                        <p>✅ Control Flow</p>
+                        <p>✅ Loops & Iteration</p>
+                        <p style="color: #ffd700; font-weight: bold;">🎯 Functions & Parameters</p>
+                        <p style="opacity: 0.6;">🔒 Classes & Objects</p>
+                        <p style="opacity: 0.6;">🔒 File Handling</p>
+                        <p style="opacity: 0.6;">🔒 Error Handling</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exitModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Leaving already? 😢</h2>
+            <p class="modal-subtitle">Where would you like to go?</p>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn btn-level" onclick="window.location.href='level.html'">
+                    Go to Level Menu
+                </button>
+                
+                <button class="modal-btn btn-map" onclick="window.location.href='topic map.html'">
+                    Go to Topic Map
+                </button>
+                
+                <button class="modal-btn btn-cancel" onclick="closeExitModal()">
+                    Cancel (Return to Game)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 🔗 Configuration
+        const NEXT_LESSON_URL = "lists-arrays-dict.html"; 
+
+        // 🆕 MODAL FUNCTIONS
+        function showExitModal() {
+            document.getElementById('exitModal').style.display = 'flex';
+        }
+
+        function closeExitModal() {
+            document.getElementById('exitModal').style.display = 'none';
+        }
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            const modal = document.getElementById('exitModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Game state
+        let gameState = {
+            level: 1,
+            xp: 0,
+            challengesCompleted: 0,
+            currentChallenge: 0,
+            achievements: [],
+            startTime: null,
+            selectedOption: undefined
+        };
+
+        // Challenges data
+        const challenges = [
+            { type: "multiple-choice", title: "🧠 Multiple Choice Quest", question: "What does this spell do?", code: `def enchant_weapon(base_damage, magic_bonus):\n    return base_damage * magic_bonus`, options: ["Adds base damage and magic bonus", "Multiplies base damage by magic bonus", "Subtracts magic bonus from base damage", "Divides base damage by magic bonus"], correct: 1, xp: 15 },
+            { type: "code-completion", title: "✏️ Code Completion Puzzle", question: "Complete this spell to calculate player experience!", code: `def calculate_exp(monsters_defeated, ______):\n    base_exp = 50\n    total_exp = monsters_defeated * base_exp * ______\n    ______ total_exp`, solution: `def calculate_exp(monsters_defeated, bonus_multiplier):\n    base_exp = 50\n    total_exp = monsters_defeated * base_exp * bonus_multiplier\n    return total_exp`, xp: 20 },
+            { type: "debug", title: "🐛 Debug the Broken Spell", question: "This teleport spell is broken! Fix it to save the day!", code: `def teleport_player(destination)\n    print(f"Teleporting to {destination}...")\n    return "Teleport successful! 🌟"`, solution: `def teleport_player(destination):  # Added missing colon!\n    print(f"Teleporting to {destination}...")\n    return "Teleport successful! 🌟"`, xp: 25 },
+            { type: "coding-mission", title: "💻 Coding Mission", question: "Create a craft_item function that takes material1, material2, and skill_level (default 1), returns a success message.", solution: `def craft_item(material1, material2, skill_level=1):\n    if skill_level >= 1:\n        item_name = f"{material1.title()} {material2.title()} Sword"\n        return f"✅ Crafted: {item_name} (Skill Level {skill_level})"\n    else:\n        return "❌ Skill level too low!"`, xp: 30 },
+            { type: "story-quest", title: "📖 Story Quest", question: "Create a serve_customer function with parameters: customer_name, drink_type, gold_coins (default 5).", solution: `def serve_customer(customer_name, drink_type, gold_coins=5):\n    drink_cost = 3\n    if gold_coins >= drink_cost:\n        change = gold_coins - drink_cost\n        return f"🍻 {customer_name} enjoys a {drink_type}! Change: {change} gold"\n    else:\n        return f"❌ Sorry {customer_name}, not enough gold for {drink_type}!"`, xp: 35 },
+            { type: "speed-round", title: "⏰ Speed Round", question: "Quick! Write a function battle_cry that takes a hero_name and returns '{hero_name} charges into battle! ⚔️'", solution: `def battle_cry(hero_name):\n    return f"{hero_name} charges into battle! ⚔️"`, xp: 20, timeLimit: 60 },
+            { type: "boss-fight", title: "🏆 BOSS FIGHT: The Function Master Challenge!", question: "Create a complete RPG battle system with calculate_attack, take_damage, and battle_round functions", solution: `def calculate_attack(base_attack, weapon_power, critical_hit=False):\n    total_attack = base_attack + weapon_power\n    if critical_hit:\n        total_attack *= 2\n        print("💥 CRITICAL HIT!")\n    return total_attack\n\ndef take_damage(current_health, damage_taken):\n    remaining_health = current_health - damage_taken\n    return max(0, remaining_health)\n\ndef battle_round(player_attack, enemy_health, enemy_attack, player_health):\n    print("\\n⚔️ BATTLE ROUND!")`, xp: 100 }
+        ];
+
+        function initGame() {
+            createStars();
+            loadChallenge(0);
+            updateUI();
+        }
+
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function loadChallenge(index) {
+            const challenge = challenges[index];
+            const container = document.getElementById('challenge-container');
+            gameState.startTime = Date.now();
+            gameState.selectedOption = undefined;
+            
+            let html = `
+                <div class="challenge-section">
+                    <div class="challenge-header">
+                        <span style="font-size: 1.5em;">${challenge.title.split(' ')[0]}</span>
+                        <span class="challenge-title">${challenge.title.substring(challenge.title.indexOf(' ') + 1)}</span>
+                    </div>
+                    <p style="margin-bottom: 15px;">${challenge.question}</p>
+            `;
+
+            if (challenge.code) {
+                html += `<div class="code-example"><pre>${challenge.code}</pre></div>`;
+            }
+
+            if (challenge.type === 'multiple-choice') {
+                html += `<div class="challenge-options">`;
+                challenge.options.forEach((option, i) => {
+                    html += `<div class="option" onclick="selectOption(${i})" data-option="${i}">${String.fromCharCode(65 + i)}) ${option}</div>`;
+                });
+                html += `</div>`;
+            } else {
+                html += `<div style="margin: 15px 0;"><textarea id="code-input" placeholder="Write your code here..." style="width: 100%; height: 150px; padding: 15px; background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-family: 'Courier New', monospace; resize: vertical;"></textarea></div>`;
+            }
+
+            html += `<button class="btn" onclick="submitAnswer()" id="submit-btn">Submit Answer</button></div>`;
+            container.innerHTML = html;
+            
+            if (challenge.timeLimit) startTimer(challenge.timeLimit);
+        }
+
+        function selectOption(index) {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector(`[data-option="${index}"]`).classList.add('selected');
+            gameState.selectedOption = index;
+        }
+
+        function submitAnswer() {
+            const challenge = challenges[gameState.currentChallenge];
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (challenge.type === 'multiple-choice') {
+                if (gameState.selectedOption === undefined) { showNotification("Please select an option first!", "error"); return; }
+                const options = document.querySelectorAll('.option');
+                options.forEach((opt, i) => {
+                    if (i === challenge.correct) opt.classList.add('correct');
+                    else if (i === gameState.selectedOption) opt.classList.add('incorrect');
+                });
+                if (gameState.selectedOption === challenge.correct) completeChallenge(challenge.xp);
+                else { showNotification("Try again!", "error"); return; }
+            } else {
+                const code = document.getElementById('code-input').value.trim();
+                if (!code) { showNotification("Please write some code first!", "error"); return; }
+                if (code.includes('def ') && code.includes('return')) completeChallenge(challenge.xp);
+                else { showNotification("Make sure your function is complete!", "error"); return; }
+            }
+            submitBtn.disabled = true;
+        }
+
+        function completeChallenge(xp) {
+            const timeTaken = (Date.now() - gameState.startTime) / 1000;
+            let bonusXP = 0;
+            if (timeTaken < 30) { bonusXP += 10; unlockAchievement('speed-demon'); }
+            
+            gameState.xp += xp + bonusXP;
+            gameState.challengesCompleted++;
+            
+            if (gameState.challengesCompleted === 1) unlockAchievement('first-challenge');
+            if (challenges[gameState.currentChallenge].type === 'debug') unlockAchievement('bug-hunter');
+            if (gameState.challengesCompleted === challenges.length) {
+                unlockAchievement('function-master');
+                unlockAchievement('boss-slayer');
+            }
+            
+            const newLevel = Math.floor(gameState.xp / 100) + 1;
+            if (newLevel > gameState.level) {
+                gameState.level = newLevel;
+                showNotification(`🎉 Level Up! Welcome to Level ${newLevel}!`, "success");
+                document.querySelector('.lesson-panel').classList.add('bounce');
+                setTimeout(() => { document.querySelector('.lesson-panel').classList.remove('bounce'); }, 600);
+            }
+            
+            updateUI();
+            showNotification(`🎉 Challenge Complete! +${xp + bonusXP} XP!`, "success");
+        }
+
+        function unlockAchievement(id) {
+            if (!gameState.achievements.includes(id)) {
+                gameState.achievements.push(id);
+                const achievement = document.querySelector(`[data-achievement="${id}"]`);
+                if (achievement) {
+                    achievement.classList.add('unlocked');
+                    showNotification(`🏆 Achievement Unlocked: ${achievement.querySelector('.achievement-text').textContent}!`, "success");
+                }
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('player-level').textContent = gameState.level;
+            document.getElementById('player-xp').textContent = gameState.xp;
+            document.getElementById('challenges-completed').textContent = gameState.challengesCompleted;
+            document.getElementById('current-challenge').textContent = gameState.currentChallenge + 1;
+            document.getElementById('total-challenges').textContent = challenges.length;
+            document.getElementById('xp-fill').style.width = ((gameState.xp % 100) / 100 * 100) + '%';
+            
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            prevBtn.disabled = gameState.currentChallenge === 0;
+            
+            if (gameState.currentChallenge === challenges.length - 1) nextBtn.textContent = "Start Lists 🚀";
+            else nextBtn.textContent = "Next Challenge";
+            nextBtn.disabled = false;
+        }
+
+        function nextChallenge() {
+            if (gameState.currentChallenge < challenges.length - 1) {
+                gameState.currentChallenge++;
+                loadChallenge(gameState.currentChallenge);
+                updateUI();
+            } else {
+                window.location.href = NEXT_LESSON_URL;
+            }
+        }
+
+        function previousChallenge() {
+            if (gameState.currentChallenge > 0) {
+                gameState.currentChallenge--;
+                loadChallenge(gameState.currentChallenge);
+                updateUI();
+            }
+        }
+
+        function showNotification(message, type = "success") {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            setTimeout(() => { notification.classList.remove('show'); }, 3000);
+        }
+
+        function startTimer(seconds) {
+            let timeLeft = seconds;
+            const timerDisplay = document.createElement('div');
+            timerDisplay.style.cssText = `position: fixed; top: 50%; right: 30px; background: rgba(255,0,0,0.8); color: white; padding: 15px; border-radius: 10px; font-size: 1.5em; font-weight: bold; z-index: 1000;`;
+            document.body.appendChild(timerDisplay);
+            
+            const countdown = setInterval(() => {
+                timerDisplay.textContent = `⏰ ${timeLeft}s`;
+                timeLeft--;
+                if (timeLeft < 0) {
+                    clearInterval(countdown);
+                    document.body.removeChild(timerDisplay);
+                    if (gameState.currentChallenge < challenges.length - 1) {
+                        showNotification("Time's up! Moving to next challenge.", "error");
+                        nextChallenge();
+                    }
+                }
+            }, 1000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
+            else if (e.key === 'ArrowLeft') previousChallenge();
+            else if (e.key === 'ArrowRight') nextChallenge();
+        });
+
+        // Confetti & Celebration
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fall { to { transform: translateY(100vh) rotate(360deg); } }
+            @keyframes celebrate { 0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; } 50% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 1; } }
+        `;
+        document.head.appendChild(style);
+
+        function addConfetti() {
+            const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7'];
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.style.cssText = `position: fixed; width: 10px; height: 10px; background: ${colors[Math.floor(Math.random() * colors.length)]}; left: ${Math.random() * 100}%; top: -10px; z-index: 9999; animation: fall 3s linear infinite;`;
+                document.body.appendChild(confetti);
+                setTimeout(() => document.body.removeChild(confetti), 3000);
+            }
+        }
+
+        function celebrateCompletion() {
+            addConfetti();
+            const celebration = document.createElement('div');
+            celebration.style.cssText = `position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; padding: 40px; border-radius: 20px; text-align: center; font-size: 2em; font-weight: bold; z-index: 9999; animation: celebrate 2s ease-in-out;`;
+            celebration.innerHTML = `<div>🎉 CONGRATULATIONS! 🎉</div><div style="font-size: 0.8em; margin-top: 15px;">You've mastered Functions & Parameters!</div><div style="font-size: 0.6em; margin-top: 10px;">Ready for the next adventure?</div>`;
+            document.body.appendChild(celebration);
+            setTimeout(() => { document.body.removeChild(celebration); }, 3000);
+        }
+
+        let originalCompleteChallenge = completeChallenge;
+        completeChallenge = function(xp) {
+            // Re-implementing completion logic to hook celebration
+            const timeTaken = (Date.now() - gameState.startTime) / 1000;
+            let bonusXP = 0;
+            if (timeTaken < 30) { bonusXP += 10; unlockAchievement('speed-demon'); }
+            
+            gameState.xp += xp + bonusXP;
+            gameState.challengesCompleted++;
+            
+            if (gameState.challengesCompleted === 1) unlockAchievement('first-challenge');
+            if (challenges[gameState.currentChallenge].type === 'debug') unlockAchievement('bug-hunter');
+            if (gameState.challengesCompleted === challenges.length) {
+                unlockAchievement('function-master');
+                unlockAchievement('boss-slayer');
+                celebrateCompletion();
+            }
+            
+            const newLevel = Math.floor(gameState.xp / 100) + 1;
+            if (newLevel > gameState.level) {
+                gameState.level = newLevel;
+                showNotification(`🎉 Level Up! Welcome to Level ${newLevel}!`, "success");
+            }
+            
+            updateUI();
+            showNotification(`🎉 Challenge Complete! +${xp + bonusXP} XP!`, "success");
+        };
+
+        window.addEventListener('load', initGame);
+        console.log(`🐍 Welcome to Python Quest! 🐍\nTips for success:\n• Use Ctrl+Enter to submit\n• Use arrow keys to navigate\nHappy coding! 🚀`);
+    </script>
+</body>
+</html>

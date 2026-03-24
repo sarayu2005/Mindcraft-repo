@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Python Web IDE</title>
+  <style>
+    body {
+      font-family: monospace;
+      background: #000000;
+      color: hsl(7, 92%, 50%);
+      padding: 20px;
+    }
+    textarea, pre {
+      width: 100%;
+      font-size: 16px;
+      background: #001f1f;
+      color: lab(52.71% 65.99 61.96);
+      border: 1px solid hsl(13, 96%, 48%);
+      padding: 10px;
+      box-shadow: 0 0 8px #e9170466;
+      /* Ensure pre wraps text */
+      white-space: pre-wrap; 
+      word-wrap: break-word;
+    }
+    button {
+      padding: 10px 20px;
+      margin: 10px 5px 10px 0;
+      background: lab(54.71% 75.87 67.76);
+      color: #000000;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 0 10px hsla(9, 93%, 37%, 0.667);
+    }
+    h2 {
+      color: #dd1409;
+      text-shadow: 0 0 6px #ca2d0d88;
+    }
+  </style> 
+</head>
+<body>
+  <h2>Python Web Compiler</h2>
+  <textarea id="code" rows="12" placeholder="Write your Python code here..."></textarea>
+  <br>
+  <textarea id="inputs" rows="2" placeholder="Optional: Inputs (separated by newlines)"></textarea>
+  <br>
+  
+  <button onclick="runCode()">Run</button>
+
+  <h2>Console Output</h2>
+  <pre id="output"></pre>
+
+  <script>
+    const textarea = document.getElementById("code");
+    const codeOutputEl = document.getElementById("output");
+
+    textarea.addEventListener("keydown", function (e) {
+      const { selectionStart, selectionEnd, value } = textarea;
+      
+      if (e.key === "Tab") {
+        e.preventDefault();
+        const indent = "    ";
+        textarea.value =
+          value.substring(0, selectionStart) + indent + value.substring(selectionEnd);
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + indent.length;
+      }
+      if (e.key === "Enter") {
+        const lineStart = value.lastIndexOf("\n", selectionStart - 1) + 1;
+        const currentLine = value.substring(lineStart, selectionStart);
+        const indentMatch = currentLine.match(/^\s*/);
+        let indent = indentMatch ? indentMatch[0] : "";
+        if (currentLine.trim().endsWith(":")) {
+          indent += "    ";
+        }
+        e.preventDefault();
+        const insert = "\n" + indent;
+        textarea.value =
+          value.substring(0, selectionStart) + insert + value.substring(selectionEnd);
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + insert.length;
+      }
+    });
+
+    async function runCode() {
+      const code = document.getElementById("code").value;
+      const inputs = document.getElementById("inputs").value.split('\n');
+      codeOutputEl.innerText = "Running..."; // Loading state
+      
+      const res = await fetch('/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code, inputs })
+      });
+      const data = await res.json();
+      codeOutputEl.innerText = data.output;
+    }
+  </script>
+</body>
+</html>

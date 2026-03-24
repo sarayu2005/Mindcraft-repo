@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Functions: The Neon Core</title>
+    <style>
+        /* --- NEON DARK THEME --- */
+        :root {
+            --bg: #030305;
+            --panel: #0e0e12;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0099;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffee00;
+            --neon-purple: #bd00ff;
+            --text-main: #fff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', 'Roboto', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            margin: 0;
+        }
+
+        h1 {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+            border: 2px solid var(--neon-cyan);
+            padding: 10px 30px;
+            border-radius: 30px;
+            background: rgba(0, 243, 255, 0.1);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+        }
+
+        /* --- VISUAL CARD --- */
+        .visual-card {
+            background: var(--panel);
+            border: 1px solid #333;
+            border-radius: 20px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            margin-bottom: 50px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .visual-card h2 {
+            margin-top: 0;
+            color: var(--neon-purple);
+            border-bottom: 2px solid var(--neon-purple);
+            padding-bottom: 10px;
+        }
+
+        .explanation {
+            color: #aaa;
+            margin-bottom: 25px;
+            font-size: 1.1rem;
+        }
+
+        /* --- CODE SNIPPET --- */
+        .code-box {
+            background: #000;
+            border-left: 4px solid var(--neon-green);
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            color: var(--neon-green);
+            margin-bottom: 25px;
+            white-space: pre-wrap;
+        }
+        .kwd { color: var(--neon-pink); font-weight: bold; }
+        .func { color: var(--neon-cyan); }
+        .param { color: var(--neon-yellow); }
+        .comment { color: #666; }
+
+        /* --- THE NEON MACHINE VISUALS --- */
+        .machine-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            padding: 20px 0;
+        }
+
+        /* Input Area */
+        .input-zone {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            min-height: 50px;
+            align-items: flex-end;
+        }
+
+        .input-slot {
+            width: 80px;
+            height: 30px;
+            border: 2px dashed var(--neon-yellow);
+            border-top: none;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        .input-slot::before {
+            content: 'INPUT';
+            position: absolute;
+            top: -20px;
+            font-size: 0.8rem;
+            color: var(--neon-yellow);
+        }
+
+        /* The Core */
+        .processing-core {
+            width: 200px;
+            height: 120px;
+            background: #111;
+            border: 3px solid var(--neon-cyan);
+            border-radius: 15px;
+            box-shadow: 0 0 25px rgba(0, 243, 255, 0.3);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            font-size: 1.2rem;
+            position: relative;
+            z-index: 2;
+            transition: all 0.3s;
+        }
+        .processing-core.active {
+            background: rgba(0, 243, 255, 0.1);
+            box-shadow: 0 0 40px rgba(0, 243, 255, 0.6);
+            transform: scale(1.05);
+        }
+
+        /* Output Area */
+        .output-zone {
+            margin-top: 20px;
+            min-height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        
+        .output-chute {
+            width: 80px;
+            height: 30px;
+            border: 2px solid var(--neon-green);
+            border-bottom: none;
+            position: relative;
+            display: flex;
+            justify-content: center;
+        }
+        .output-chute::after {
+            content: 'RETURN / OUTPUT';
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.8rem;
+            color: var(--neon-green);
+            white-space: nowrap;
+        }
+
+        /* Data Blocks (Animated) */
+        .data-block {
+            width: 60px;
+            height: 40px;
+            background: #222;
+            border: 2px solid;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            position: absolute;
+            transition: all 0.8s ease-in-out;
+            z-index: 1;
+            opacity: 0;
+        }
+
+        .data-input { border-color: var(--neon-yellow); color: var(--neon-yellow); box-shadow: 0 0 10px var(--neon-yellow); }
+        .data-output { border-color: var(--neon-green); color: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+
+        /* --- CONTROLS --- */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            align-items: center;
+        }
+        input {
+            background: #222;
+            border: 1px solid var(--neon-cyan);
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            width: 120px;
+        }
+        button {
+            background: transparent;
+            border: 2px solid var(--neon-pink);
+            color: var(--neon-pink);
+            padding: 10px 20px;
+            font-weight: bold;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+        button:hover {
+            background: var(--neon-pink);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-pink);
+        }
+
+        .result-log {
+            margin-top: 20px;
+            font-family: 'Courier New', monospace;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Visual Python Functions</h1>
+
+    <div class="container">
+
+        <div class="visual-card" style="border-color: var(--neon-cyan);">
+            <h2>1. The Basic Processing Core</h2>
+            <p class="explanation">
+                A basic function is a reusable block of code. You "call" it by name, it runs its internal code, and then finishes. It doesn't need inputs and doesn't give back a value.
+            </p>
+
+            <div class="code-box">
+<span class="kwd">def</span> <span class="func">activate_alarm</span>():
+    <span class="comment"># This is the core's job</span>
+    print(<span class="neon-pink">"ALARM! ALARM!"</span>)
+
+<span class="comment"># Call the function</span>
+<span class="func">activate_alarm</span>()</div>
+
+            <div class="machine-container">
+                <div class="processing-core" id="core-1">
+                    PRINT "ALARM!"
+                </div>
+                </div>
+
+            <div class="controls">
+                <button onclick="runCore1()">Call Function</button>
+                <div class="result-log" id="log-1">Console: Waiting...</div>
+            </div>
+        </div>
+
+
+        <div class="visual-card" style="border-color: var(--neon-yellow);">
+            <h2>2. The Core with Input Slots (Parameters)</h2>
+            <p class="explanation">
+                Functions become powerful when you can give them data to work with. These inputs are called <strong>Parameters</strong> (the slots) and <strong>Arguments</strong> (the actual data you drop in).
+            </p>
+
+            <div class="code-box">
+<span class="kwd">def</span> <span class="func">greet_user</span>(<span class="param">name</span>):
+    <span class="comment"># Uses the input data</span>
+    print(<span class="neon-pink">"Welcome, "</span> + <span class="param">name</span>)
+
+<span class="comment"># Drop "Neo" into the 'name' slot</span>
+<span class="func">greet_user</span>(<span class="neon-yellow">"Neo"</span>)</div>
+
+            <div class="machine-container" style="height: 250px;">
+                <div class="input-zone">
+                    <div class="input-slot" id="slot-name"></div>
+                </div>
+                
+                <div class="processing-core" id="core-2">
+                    PRINT "Welcome " + name
+                </div>
+
+                <div id="data-in-2" class="data-block data-input" style="top: 0px;"></div>
+
+                <div class="output-zone">
+                    </div>
+            </div>
+
+            <div class="controls">
+                <input type="text" id="input-name" placeholder='Type a name (e.g., "Neo")'>
+                <button style="border-color:var(--neon-yellow); color:var(--neon-yellow);" onclick="runCore2()">Call with Input</button>
+            </div>
+            <div class="result-log" id="log-2" style="color:var(--neon-yellow);">Console: Waiting for input...</div>
+        </div>
+
+
+        <div class="visual-card" style="border-color: var(--neon-green);">
+            <h2>3. The Core with Output Chute (Return)</h2>
+            <p class="explanation">
+                The most useful functions process inputs and then <strong>give back</strong> a result. The `return` keyword is the output chute. The function *becomes* the value it returns.
+            </p>
+
+            <div class="code-box">
+<span class="kwd">def</span> <span class="func">add_numbers</span>(<span class="param">a</span>, <span class="param">b</span>):
+    <span class="comment"># Process the inputs</span>
+    result = <span class="param">a</span> + <span class="param">b</span>
+    <span class="comment"># Send it out the chute</span>
+    <span class="kwd">return</span> result
+
+<span class="comment"># The function call is replaced by the result (30)</span>
+final_score = <span class="func">add_numbers</span>(<span class="neon-yellow">10</span>, <span class="neon-yellow">20</span>)</div>
+
+            <div class="machine-container" style="height: 300px;">
+                <div class="input-zone" style="gap: 60px;">
+                    <div class="input-slot">a</div>
+                    <div class="input-slot">b</div>
+                </div>
+                
+                <div class="processing-core" id="core-3">
+                    RETURN a + b
+                </div>
+
+                <div class="output-zone">
+                    <div class="output-chute"></div>
+                </div>
+
+                <div id="data-in-3a" class="data-block data-input" style="top: 0px; left: calc(50% - 70px);"></div>
+                <div id="data-in-3b" class="data-block data-input" style="top: 0px; left: calc(50% + 10px);"></div>
+                <div id="data-out-3" class="data-block data-output" style="top: 150px; opacity:0;"></div>
+            </div>
+
+            <div class="controls">
+                <input type="number" id="input-a" placeholder="Number a (e.g., 10)" style="width:80px;">
+                <input type="number" id="input-b" placeholder="Number b (e.g., 20)" style="width:80px;">
+                <button style="border-color:var(--neon-green); color:var(--neon-green);" onclick="runCore3()">Calculate & Return</button>
+            </div>
+            <div class="result-log" id="log-3" style="color:var(--neon-green);">Returned Value: Waiting...</div>
+        </div>
+
+    </div>
+
+    <script>
+        // ================= LOGIC 1: BASIC CORE =================
+        function runCore1() {
+            const core = document.getElementById('core-1');
+            const log = document.getElementById('log-1');
+
+            // Activate Core Visual
+            core.classList.add('active');
+            log.innerText = 'Console: ALARM! ALARM!';
+            log.style.color = 'var(--neon-pink)';
+
+            // Deactivate after a moment
+            setTimeout(() => {
+                core.classList.remove('active');
+            }, 1000);
+        }
+
+
+        // ================= LOGIC 2: INPUT CORE =================
+        function runCore2() {
+            const nameVal = document.getElementById('input-name').value || "Anon";
+            const dataBlock = document.getElementById('data-in-2');
+            const core = document.getElementById('core-2');
+            const log = document.getElementById('log-2');
+
+            // Reset Animation
+            dataBlock.style.transition = 'none';
+            dataBlock.style.top = '0px';
+            dataBlock.style.opacity = '1';
+            dataBlock.innerText = `"${nameVal}"`;
+            
+            // Force reflow
+            dataBlock.offsetHeight; 
+
+            // Start Animation: Move into Core
+            dataBlock.style.transition = 'all 0.8s ease-in-out';
+            dataBlock.style.top = '90px'; // Move to core center
+
+            // When it hits the core
+            setTimeout(() => {
+                dataBlock.style.opacity = '0'; // Disappear into core
+                core.classList.add('active');
+                log.innerText = `Console: Welcome, ${nameVal}`;
+
+                // Finish
+                setTimeout(() => {
+                    core.classList.remove('active');
+                }, 1000);
+            }, 800);
+        }
+
+
+        // ================= LOGIC 3: RETURN CORE =================
+        function runCore3() {
+            const valA = parseFloat(document.getElementById('input-a').value) || 0;
+            const valB = parseFloat(document.getElementById('input-b').value) || 0;
+            const result = valA + valB;
+
+            const blockA = document.getElementById('data-in-3a');
+            const blockB = document.getElementById('data-in-3b');
+            const blockOut = document.getElementById('data-out-3');
+            const core = document.getElementById('core-3');
+            const log = document.getElementById('log-3');
+
+            // 1. Reset & Setup Inputs
+            [blockA, blockB].forEach(block => {
+                block.style.transition = 'none';
+                block.style.top = '0px';
+                block.style.opacity = '1';
+            });
+            blockA.innerText = valA;
+            blockB.innerText = valB;
+            blockOut.style.transition = 'none';
+            blockOut.style.top = '150px'; // Start inside core area
+            blockOut.style.opacity = '0';
+            blockOut.innerText = result;
+
+            blockA.offsetHeight; // Force reflow
+
+            // 2. Animate Inputs IN
+            [blockA, blockB].forEach(block => {
+                block.style.transition = 'all 0.8s ease-in-out';
+                block.style.top = '100px';
+            });
+
+            // 3. Process & Animate Output OUT
+            setTimeout(() => {
+                // Inputs disappear
+                blockA.style.opacity = '0';
+                blockB.style.opacity = '0';
+                core.classList.add('active');
+
+                // Output appears and moves down
+                setTimeout(() => {
+                    blockOut.style.transition = 'all 0.8s ease-out';
+                    blockOut.style.opacity = '1';
+                    blockOut.style.top = '250px'; // Move out of chute
+
+                    // Update Log
+                    log.innerText = `Returned Value: ${result}`;
+
+                    // Cleanup
+                    setTimeout(() => {
+                        core.classList.remove('active');
+                    }, 1000);
+                }, 500);
+            }, 800);
+        }
+
+    </script>
+</body>
+</html>

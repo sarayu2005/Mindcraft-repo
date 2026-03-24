@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Functions: Real World Examples</title>
+    <style>
+        /* --- NEON EXAMPLE PALETTE --- */
+        :root {
+            --bg: #09090b;
+            --card-bg: #141416;
+            --neon-purple: #d946ef;
+            --neon-blue: #06b6d4;
+            --neon-green: #22c55e;
+            --neon-red: #ef4444;
+            --text-code: #e2e8f0;
+            --text-main: #fff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', sans-serif;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--neon-purple);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+            text-shadow: 0 0 20px rgba(217, 70, 239, 0.4);
+            border: 2px solid var(--neon-purple);
+            padding: 10px 20px;
+            border-radius: 8px;
+        }
+
+        /* --- SCENARIO CARD --- */
+        .scenario-card {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            width: 100%;
+            max-width: 1000px;
+            background: var(--card-bg);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 50px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-card h2 {
+            width: 100%;
+            margin-top: 0;
+            color: var(--neon-blue);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .code-section {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        .visual-section {
+            flex: 1;
+            min-width: 300px;
+            background: #000;
+            border: 1px dashed #444;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        /* --- CODE STYLING --- */
+        pre {
+            background: #000;
+            padding: 15px;
+            border-left: 3px solid var(--neon-purple);
+            color: var(--text-code);
+            font-family: 'Consolas', monospace;
+            overflow-x: auto;
+            border-radius: 5px;
+            font-size: 0.95rem;
+        }
+        
+        .kwd { color: var(--neon-purple); font-weight: bold; }
+        .func { color: var(--neon-blue); }
+        .str { color: var(--neon-green); }
+        .num { color: #f59e0b; }
+        .cmt { color: #666; font-style: italic; }
+
+        /* --- INPUTS & BUTTONS --- */
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            width: 100%;
+        }
+        
+        input {
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 8px;
+            border-radius: 4px;
+            flex: 1;
+            font-family: 'Consolas', monospace;
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid var(--neon-blue);
+            color: var(--neon-blue);
+            padding: 8px 16px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        /* --- VISUALS: SCENARIO 1 (ID CARD) --- */
+        .id-badge {
+            width: 220px;
+            height: 140px;
+            background: linear-gradient(135deg, #222, #111);
+            border: 2px solid var(--neon-blue);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            box-shadow: 0 0 20px rgba(6, 182, 212, 0.2);
+            transition: 0.3s;
+        }
+        .badge-header { font-size: 0.8rem; color: #888; text-transform: uppercase; border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 10px;}
+        .badge-name { font-size: 1.4rem; font-weight: bold; color: #fff; }
+        .badge-role { color: var(--neon-blue); font-family: monospace; }
+
+        /* --- VISUALS: SCENARIO 2 (RECEIPT) --- */
+        .receipt-box {
+            font-family: 'Courier New', monospace;
+            color: #ccc;
+            width: 100%;
+            text-align: center;
+        }
+        .price-big { font-size: 2rem; color: var(--neon-green); margin: 10px 0; }
+
+        /* --- VISUALS: SCENARIO 3 (LOCK) --- */
+        .lock-icon { font-size: 4rem; margin-bottom: 10px; transition: 0.3s; }
+        .status-text { font-weight: bold; letter-spacing: 2px; }
+        .locked { color: var(--neon-red); }
+        .unlocked { color: var(--neon-green); text-shadow: 0 0 15px var(--neon-green); }
+
+    </style>
+</head>
+<body>
+
+    <h1>Functions: Example Lab</h1>
+
+    <div class="scenario-card">
+        <h2>🏷️ Example 1: The ID Card Maker (Parameters)</h2>
+        
+        <div class="code-section">
+            <p>Functions act like templates. You define the layout once, and pass different data (`name`, `role`) to fill the blanks.</p>
+            <pre>
+<span class="kwd">def</span> <span class="func">create_badge</span>(name, role):
+    print(<span class="str">"--- ID BADGE ---"</span>)
+    print(<span class="str">"Name: "</span> + name)
+    print(<span class="str">"Role: "</span> + role)</pre>
+            
+            <div class="input-group">
+                <input type="text" id="in-name" placeholder="Name (e.g., Stark)" value="Stark">
+                <input type="text" id="in-role" placeholder="Role (e.g., Hero)" value="Avenger">
+                <button onclick="runBadge()">Create</button>
+            </div>
+        </div>
+
+        <div class="visual-section">
+            <div id="badge-visual" class="id-badge" style="opacity: 0.5; filter: grayscale(1);">
+                <div class="badge-header">Security Access</div>
+                <div class="badge-name" id="out-name">Unknown</div>
+                <div class="badge-role" id="out-role">Visitor</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="scenario-card">
+        <h2>💵 Example 2: The Tax Calculator (Return)</h2>
+        
+        <div class="code-section">
+            <p>Often, you don't want to just print input; you want to <strong>transform</strong> it (Math) and get the result back.</p>
+            <pre>
+<span class="kwd">def</span> <span class="func">add_tax</span>(price):
+    tax = price * <span class="num">0.10</span>
+    total = price + tax
+    <span class="kwd">return</span> total  <span class="cmt"># Sends value back</span>
+
+<span class="cmt"># The function becomes the number</span>
+final = <span class="func">add_tax</span>(<span class="num">100</span>)</pre>
+            
+            <div class="input-group">
+                <input type="number" id="in-price" placeholder="Price $" value="50">
+                <button style="border-color:var(--neon-green); color:var(--neon-green);" onclick="runTax()">Calculate</button>
+            </div>
+        </div>
+
+        <div class="visual-section">
+            <div class="receipt-box">
+                <div>ITEM PRICE: $<span id="disp-price">0</span></div>
+                <div>TAX (10%): $<span id="disp-tax">0</span></div>
+                <div style="border-top: 1px dashed #555; margin: 10px 0;"></div>
+                <div>TOTAL TO PAY</div>
+                <div class="price-big">$<span id="disp-total">0</span></div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="scenario-card">
+        <h2>🔒 Example 3: The Security Gate (Boolean Return)</h2>
+        
+        <div class="code-section">
+            <p>Functions are great for checking rules. They return <code>True</code> or <code>False</code> to tell the system what to do next.</p>
+            <pre>
+<span class="kwd">def</span> <span class="func">check_password</span>(input_pass):
+    <span class="kwd">if</span> input_pass == <span class="str">"1234"</span>:
+        <span class="kwd">return True</span>
+    <span class="kwd">else</span>:
+        <span class="kwd">return False</span></pre>
+            
+            <div class="input-group">
+                <input type="password" id="in-pass" placeholder="Enter PIN (Hint: 1234)">
+                <button style="border-color:var(--neon-red); color:var(--neon-red);" onclick="runSecurity()">Check</button>
+            </div>
+        </div>
+
+        <div class="visual-section">
+            <div id="lock-icon" class="lock-icon locked">🔒</div>
+            <div id="lock-status" class="status-text locked">ACCESS DENIED</div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. BADGE LOGIC ---
+        function runBadge() {
+            const name = document.getElementById('in-name').value;
+            const role = document.getElementById('in-role').value;
+            const badge = document.getElementById('badge-visual');
+
+            // Animate
+            badge.style.transform = "scale(0.9)";
+            setTimeout(() => {
+                document.getElementById('out-name').innerText = name;
+                document.getElementById('out-role').innerText = role;
+                badge.style.opacity = "1";
+                badge.style.filter = "none";
+                badge.style.transform = "scale(1)";
+                badge.style.borderColor = "var(--neon-blue)";
+                badge.style.boxShadow = "0 0 20px var(--neon-blue)";
+            }, 150);
+        }
+
+        // --- 2. TAX LOGIC ---
+        function runTax() {
+            const price = parseFloat(document.getElementById('in-price').value) || 0;
+            const tax = price * 0.10;
+            const total = price + tax;
+
+            // Update Visuals
+            document.getElementById('disp-price').innerText = price.toFixed(2);
+            document.getElementById('disp-tax').innerText = tax.toFixed(2);
+            
+            const totalEl = document.getElementById('disp-total');
+            totalEl.style.opacity = 0;
+            
+            setTimeout(() => {
+                totalEl.innerText = total.toFixed(2);
+                totalEl.style.opacity = 1;
+                totalEl.style.transition = "opacity 0.5s";
+            }, 200);
+        }
+
+        // --- 3. SECURITY LOGIC ---
+        function runSecurity() {
+            const input = document.getElementById('in-pass').value;
+            const icon = document.getElementById('lock-icon');
+            const status = document.getElementById('lock-status');
+
+            // Reset animation
+            icon.style.transform = "rotate(0deg)";
+
+            if(input === "1234") {
+                // TRUE
+                setTimeout(() => {
+                    icon.innerHTML = "🔓";
+                    icon.className = "lock-icon unlocked";
+                    status.innerText = "ACCESS GRANTED";
+                    status.className = "status-text unlocked";
+                }, 200);
+            } else {
+                // FALSE
+                icon.className = "lock-icon locked";
+                // Shake animation
+                icon.animate([
+                    { transform: 'translateX(0)' },
+                    { transform: 'translateX(-10px)' },
+                    { transform: 'translateX(10px)' },
+                    { transform: 'translateX(0)' }
+                ], { duration: 300 });
+
+                status.innerText = "ACCESS DENIED";
+                status.className = "status-text locked";
+            }
+        }
+    </script>
+</body>
+</html>

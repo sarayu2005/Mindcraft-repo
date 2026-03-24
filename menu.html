@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NeonCode: Select Module</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@700&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #050505;
+      --neon-blue: #00f3ff;
+      --neon-purple: #bc13fe;
+      --neon-pink: #ff00de;
+      --neon-green: #39ff14;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      background-image: 
+        linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      background-size: 100% 4px, 3px 100%;
+      color: #fff;
+      font-family: 'JetBrains Mono', monospace;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    /* Floating Animation for Header */
+    @keyframes float {
+      0% { transform: translateY(0px); text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+      50% { transform: translateY(-10px); text-shadow: 0 0 20px rgba(255,255,255,0.6); }
+      100% { transform: translateY(0px); text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+    }
+
+    h1 {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 3rem;
+      letter-spacing: 8px;
+      margin-bottom: 60px;
+      text-transform: uppercase;
+      animation: float 4s ease-in-out infinite;
+      position: relative;
+    }
+
+    h1::after {
+      content: 'SELECT DIFFICULTY';
+      position: absolute;
+      left: 2px;
+      top: 2px;
+      color: var(--neon-purple);
+      z-index: -1;
+      opacity: 0.5;
+    }
+
+    .menu-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 30px;
+      perspective: 1000px;
+    }
+
+    a {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 350px;
+      padding: 25px;
+      text-decoration: none;
+      text-transform: uppercase;
+      font-weight: 900;
+      letter-spacing: 2px;
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(10px);
+      border: 2px solid;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      clip-path: polygon(10% 0, 100% 0, 100% 70%, 90% 100%, 0 100%, 0 30%);
+    }
+
+    a::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: 0.5s;
+    }
+
+    a:hover::before {
+      left: 100%;
+    }
+
+    a:hover {
+      transform: scale(1.1) rotateX(10deg);
+      letter-spacing: 5px;
+      color: #fff;
+    }
+
+    /* 1. Beginner - Neon Cyan/Green */
+    .btn-beginner {
+      color: var(--neon-blue);
+      border-color: var(--neon-blue);
+      box-shadow: 0 0 15px rgba(0, 243, 255, 0.1), inset 0 0 10px rgba(0, 243, 255, 0.1);
+    }
+    .btn-beginner:hover {
+      background: var(--neon-blue);
+      box-shadow: 0 0 40px var(--neon-blue);
+      text-shadow: 0 0 10px #fff;
+      color: #000 !important;
+    }
+
+    /* 2. Intermediate - Neon Purple */
+    .btn-intermediate {
+      color: var(--neon-purple);
+      border-color: var(--neon-purple);
+      box-shadow: 0 0 15px rgba(188, 19, 254, 0.1), inset 0 0 10px rgba(188, 19, 254, 0.1);
+    }
+    .btn-intermediate:hover {
+      background: var(--neon-purple);
+      box-shadow: 0 0 40px var(--neon-purple);
+      text-shadow: 0 0 10px #fff;
+      color: #000 !important;
+    }
+
+    /* 3. Advanced - Neon Pink */
+    .btn-advanced {
+      color: var(--neon-pink);
+      border-color: var(--neon-pink);
+      box-shadow: 0 0 15px rgba(255, 0, 222, 0.1), inset 0 0 10px rgba(255, 0, 222, 0.1);
+    }
+    .btn-advanced:hover {
+      background: var(--neon-pink);
+      box-shadow: 0 0 40px var(--neon-pink);
+      text-shadow: 0 0 10px #fff;
+      color: #000 !important;
+    }
+
+    /* Decorative Scanline */
+    .scanline {
+      width: 100%;
+      height: 100px;
+      z-index: 10;
+      background: linear-gradient(0deg, rgba(0, 243, 255, 0) 0%, rgba(0, 243, 255, 0.1) 50%, rgba(0, 243, 255, 0) 100%);
+      opacity: 0.1;
+      position: absolute;
+      bottom: 100%;
+      animation: scan 10s linear infinite;
+    }
+
+    @keyframes scan {
+      0% { bottom: 100%; }
+      100% { bottom: -100px; }
+    }
+  </style>
+</head>
+<body>
+
+    <div class="scanline"></div>
+
+    <h1>Select Difficulty</h1>
+
+    <div class="menu-container">
+        <a href="set1.html" class="btn-beginner">Module 1: Beginner</a>
+        <a href="set2.html" class="btn-intermediate">Module 2: Intermediate</a>
+        <a href="set3.html" class="btn-advanced">Module 3: Advanced</a>
+    </div>
+
+</body>
+</html>

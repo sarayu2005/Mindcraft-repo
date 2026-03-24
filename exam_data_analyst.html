@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT: DATA NEXUS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Rajdhani:wght@300;500;700&display=swap');
+
+        :root {
+            --bg-deep: #050510;
+            --bg-panel: rgba(20, 20, 40, 0.7);
+            --neon-cyan: #00f0ff;
+            --neon-purple: #bd00ff;
+            --neon-green: #00ff9d;
+            --neon-pink: #ff0055;
+            --glass-border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 50% 50%, #1a1a3a 0%, transparent 60%),
+                linear-gradient(0deg, rgba(0,240,255,0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(189,0,255,0.03) 1px, transparent 1px);
+            background-size: 100% 100%, 40px 40px, 40px 40px;
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HUD HEADER --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 30px;
+            background: rgba(5, 5, 16, 0.9);
+            border-bottom: 1px solid var(--neon-purple);
+            box-shadow: 0 0 20px rgba(189,0,255,0.2);
+            z-index: 100;
+        }
+
+        .logo { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; letter-spacing: 2px; }
+        .logo span { color: var(--neon-cyan); text-shadow: 0 0 10px var(--neon-cyan); }
+
+        .hud-stats {
+            display: flex; gap: 30px; align-items: center;
+            font-family: 'Orbitron', sans-serif; font-size: 0.9rem; color: var(--neon-cyan);
+        }
+        .xp-bar-container { width: 150px; height: 8px; background: #333; transform: skewX(-20deg); border: 1px solid #555; }
+        .xp-fill { width: 0%; height: 100%; background: var(--neon-purple); box-shadow: 0 0 10px var(--neon-purple); transition: width 0.5s; }
+
+        /* --- MAIN GRID LAYOUT --- */
+        .main-grid {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 280px 1fr 60px; /* Sidebar, Main, Tools */
+            gap: 20px;
+            padding: 20px;
+            height: 100%;
+        }
+
+        /* --- SIDEBAR: HOLO-COMMS --- */
+        .holo-panel {
+            background: var(--bg-panel);
+            border: var(--glass-border);
+            border-left: 3px solid var(--neon-purple);
+            border-radius: 0 10px 10px 0;
+            padding: 20px;
+            display: flex; flex-direction: column; align-items: center;
+            backdrop-filter: blur(10px);
+            position: relative;
+        }
+
+        .holo-avatar-container {
+            width: 120px; height: 120px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+        
+        .holo-ring {
+            position: absolute; top:0; left:0; width:100%; height:100%;
+            border: 2px solid var(--neon-cyan); border-radius: 50%;
+            border-top-color: transparent; border-bottom-color: transparent;
+            animation: spin 4s linear infinite;
+        }
+        .holo-ring:nth-child(2) { width:80%; height:80%; top:10%; left:10%; border-color: var(--neon-purple); animation: spin-rev 3s linear infinite; }
+
+        .avatar-img {
+            width: 100%; height: 100%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 3rem; color: var(--neon-cyan);
+            filter: drop-shadow(0 0 10px var(--neon-cyan));
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .comms-log {
+            width: 100%; flex: 1;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid #333;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            color: var(--neon-green);
+            overflow-y: auto;
+            text-shadow: 0 0 2px var(--neon-green);
+        }
+        .log-entry { margin-bottom: 8px; opacity: 0; animation: typeIn 0.3s forwards; }
+
+        /* --- MAIN STAGE --- */
+        .stage-container {
+            display: flex; justify-content: center; align-items: center;
+            position: relative;
+        }
+
+        .quest-card {
+            width: 100%; max-width: 900px;
+            background: rgba(15, 15, 30, 0.95);
+            border: 1px solid var(--neon-purple);
+            box-shadow: 0 0 50px rgba(189,0,255,0.15);
+            padding: 40px;
+            border-radius: 20px;
+            position: relative;
+            clip-path: polygon(
+                20px 0, 100% 0, 100% calc(100% - 20px), 
+                calc(100% - 20px) 100%, 0 100%, 0 20px
+            );
+            backdrop-filter: blur(5px);
+            min-height: 550px;
+            display: flex; flex-direction: column;
+        }
+        
+        .scrollable-card {
+            overflow-y: auto;
+            max-height: 70vh;
+        }
+
+        /* --- THEORY ARCHIVE CSS --- */
+        .archive-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .archive-module {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 8px;
+            transition: 0.3s;
+        }
+        .archive-module:hover {
+            border-color: var(--neon-cyan);
+            background: rgba(0, 240, 255, 0.05);
+        }
+        .module-header {
+            display: flex; align-items: center; gap: 10px;
+            color: var(--neon-cyan); font-family: 'Orbitron'; font-size: 1.1rem;
+            margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px;
+        }
+        .module-text {
+            color: #ccc; font-size: 0.95rem; line-height: 1.5;
+        }
+
+        /* --- MINI GAMES CSS --- */
+        
+        /* Pipeline Game */
+        .pipeline-zone {
+            display: flex; align-items: center; justify-content: center; gap: 30px;
+            margin: 30px 0; padding: 20px;
+            background: rgba(0,0,0,0.5); border-radius: 10px; border: 1px solid #333;
+        }
+        .node {
+            width: 80px; height: 80px; background: #222; border: 2px solid #555;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border-radius: 10px; color: #aaa; transition: 0.3s;
+        }
+        .node i { font-size: 1.8rem; margin-bottom: 5px; }
+        .node.active { border-color: var(--neon-cyan); color: var(--neon-cyan); box-shadow: 0 0 15px var(--neon-cyan); }
+        .pipe-connection {
+            width: 100px; height: 10px; background: #333; border-radius: 5px; position: relative; overflow: hidden;
+        }
+        .pipe-flow {
+            width: 0%; height: 100%; background: var(--neon-purple);
+            box-shadow: 0 0 10px var(--neon-purple); transition: width 1s;
+        }
+
+        /* Array Matrix Game */
+        .matrix-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+            width: 200px; margin: 20px auto;
+        }
+        .matrix-cell {
+            height: 50px; border: 1px solid var(--neon-cyan);
+            display: flex; justify-content: center; align-items: center;
+            font-family: 'Orbitron'; font-size: 1.2rem;
+            background: rgba(0, 240, 255, 0.05); color: transparent;
+            transition: 0.3s; cursor: pointer;
+        }
+        .matrix-cell.revealed { background: var(--neon-cyan); color: black; box-shadow: 0 0 15px var(--neon-cyan); }
+
+        /* Graph Plotter */
+        .holo-canvas {
+            width: 400px; height: 200px;
+            border-left: 2px solid white; border-bottom: 2px solid white;
+            margin: 20px auto; position: relative;
+            background: repeating-linear-gradient(0deg, transparent, transparent 19px, rgba(255,255,255,0.1) 20px),
+                        repeating-linear-gradient(90deg, transparent, transparent 19px, rgba(255,255,255,0.1) 20px);
+        }
+        .data-point {
+            width: 8px; height: 8px; background: var(--neon-green); border-radius: 50%;
+            position: absolute; opacity: 0; transition: 0.5s;
+        }
+        .data-line {
+            position: absolute; height: 2px; background: var(--neon-green); transform-origin: left center;
+            opacity: 0; box-shadow: 0 0 5px var(--neon-green); transition: 1s;
+        }
+
+        /* --- OPTIONS --- */
+        .options-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: auto; }
+        .tech-btn {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid #444;
+            padding: 15px;
+            color: var(--text-muted);
+            font-family: 'Rajdhani', sans-serif;
+            font-size: 1.1rem; font-weight: bold;
+            text-align: left;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s;
+        }
+        .tech-btn::before {
+            content: ''; position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+            background: var(--neon-cyan); transform: scaleY(0); transition: transform 0.3s;
+        }
+        .tech-btn:hover { background: rgba(0, 240, 255, 0.1); color: white; border-color: var(--neon-cyan); }
+        .tech-btn:hover::before { transform: scaleY(1); }
+        
+        .tech-btn.correct { background: rgba(0, 255, 157, 0.2); border-color: var(--neon-green); color: var(--neon-green); }
+        .tech-btn.wrong { background: rgba(255, 0, 85, 0.2); border-color: var(--neon-pink); color: var(--neon-pink); }
+
+        /* --- ANIMATIONS --- */
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes spin-rev { 0% { transform: rotate(360deg); } 100% { transform: rotate(0deg); } }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+        @keyframes typeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+
+        /* --- UTILS --- */
+        .hidden { display: none !important; }
+        .glow-text { text-shadow: 0 0 10px currentColor; }
+        .btn-action {
+            background: linear-gradient(90deg, var(--neon-purple), #6a0090);
+            border: none; padding: 12px 30px; color: white;
+            font-family: 'Orbitron'; letter-spacing: 2px;
+            cursor: pointer; clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+            transition: 0.3s; text-transform: uppercase;
+            box-shadow: 0 0 20px rgba(189,0,255,0.4);
+            margin-top: 20px; align-self: flex-end;
+        }
+        .btn-action:hover { transform: scale(1.05); box-shadow: 0 0 30px rgba(189,0,255,0.6); }
+
+        .btn-secondary {
+            background: transparent; border: 1px solid var(--neon-cyan); color: var(--neon-cyan);
+            padding: 12px 30px; font-family: 'Orbitron'; letter-spacing: 2px; cursor: pointer;
+            transition: 0.3s; text-transform: uppercase; margin-top: 20px;
+        }
+        .btn-secondary:hover { background: rgba(0,240,255,0.1); box-shadow: 0 0 15px rgba(0,240,255,0.3); }
+
+        .voice-toggle {
+            position: fixed; bottom: 20px; right: 20px;
+            width: 50px; height: 50px;
+            background: #111; border: 1px solid var(--neon-cyan); border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--neon-cyan); cursor: pointer; z-index: 200;
+            box-shadow: 0 0 15px rgba(0,240,255,0.2);
+        }
+        .voice-toggle.muted { color: #555; border-color: #555; box-shadow: none; }
+
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">MIND<span>CRAFT</span></div>
+        <div class="hud-stats">
+            <div><i class="fas fa-microchip"></i> DATA ANALYST</div>
+            <div>XP: <span id="xp-val" style="color:var(--neon-green)">0</span></div>
+            <div class="xp-bar-container"><div class="xp-fill" id="xp-bar"></div></div>
+            <a href="exam.html" style="color:white; text-decoration:none;"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <div class="main-grid">
+        
+        <aside class="holo-panel">
+            <div class="holo-avatar-container">
+                <div class="holo-ring"></div>
+                <div class="holo-ring"></div>
+                <div class="avatar-img"><i class="fas fa-user-astronaut"></i></div>
+            </div>
+            <h3 style="color:var(--neon-cyan); font-family:'Orbitron'; margin-bottom:10px;">A.I. MENTOR</h3>
+            <div class="comms-log" id="comms-log">
+                </div>
+        </aside>
+
+        <main class="stage-container">
+            
+            <div id="slide-1" class="quest-card">
+                <div style="text-align: center; margin: auto;">
+                    <i class="fas fa-network-wired" style="font-size: 5rem; color: var(--neon-purple); margin-bottom: 20px; filter: drop-shadow(0 0 20px var(--neon-purple));"></i>
+                    <h1 style="font-size: 3rem; font-family: 'Orbitron'; margin-bottom: 10px;">DATA <span style="color:var(--neon-cyan)">NEXUS</span></h1>
+                    <p style="color: #aaa; font-size: 1.2rem; margin-bottom: 30px;">
+                        Initializing Certification Protocol...<br>
+                        Subjects: Pandas, NumPy, Matplotlib.
+                    </p>
+                    <div style="display: flex; gap: 20px; justify-content: center;">
+                        <button class="btn-secondary" onclick="openBriefing()">ACCESS ARCHIVES</button>
+                        <button class="btn-action" onclick="startExam()">INITIALIZE EXAM</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="slide-briefing" class="quest-card scrollable-card hidden">
+                <div style="display:flex; justify-content:space-between; align-items:center; border-bottom: 1px solid var(--neon-cyan); padding-bottom:15px; margin-bottom:20px;">
+                    <h2 style="font-family: 'Orbitron'; color: var(--neon-cyan); margin:0;">CLASSIFIED ARCHIVES: DATA ANALYST</h2>
+                    <button onclick="closeBriefing()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;"><i class="fas fa-times"></i></button>
+                </div>
+
+                <div class="archive-grid">
+                    <div class="archive-module">
+                        <div class="module-header"><i class="fas fa-question-circle"></i> WHAT IS IT?</div>
+                        <div class="module-text">
+                            Data Analysis is the systematic process of inspecting, cleansing, transforming, and modeling data to discover useful information, inform conclusions, and support decision-making.
+                        </div>
+                    </div>
+                    
+                    <div class="archive-module">
+                        <div class="module-header"><i class="fas fa-user-secret"></i> WHO DOES IT?</div>
+                        <div class="module-text">
+                            <strong>Data Analysts:</strong> Detectives of the digital age. They bridge the gap between raw, chaotic data streams and strategic business leaders who need answers.
+                        </div>
+                    </div>
+
+                    <div class="archive-module">
+                        <div class="module-header"><i class="fas fa-cogs"></i> HOW IS IT USED?</div>
+                        <div class="module-text">
+                            Using Python libraries as the primary toolkit:
+                            <ul style="margin-left: 20px; margin-top: 5px; color: var(--neon-green);">
+                                <li><strong>Pandas:</strong> For data manipulation (DataFrames).</li>
+                                <li><strong>NumPy:</strong> For numerical calculations (Arrays).</li>
+                                <li><strong>Matplotlib:</strong> For visualizing trends (Plots).</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="archive-module">
+                        <div class="module-header"><i class="fas fa-lightbulb"></i> WHY IS IT CRITICAL?</div>
+                        <div class="module-text">
+                            Without analysis, data is just noise. It helps organizations:
+                            <br>- Predict future market trends.
+                            <br>- Optimize operational efficiency.
+                            <br>- Eliminate guesswork in strategy.
+                        </div>
+                    </div>
+                    
+                    <div class="archive-module" style="grid-column: span 2;">
+                        <div class="module-header"><i class="fas fa-globe"></i> WHERE & WHEN?</div>
+                        <div class="module-text">
+                            Used globally in Finance, Healthcare, Tech, and Marketing. Real-time analytics happens 24/7 (e.g., fraud detection), while batch analytics happens for quarterly reports.
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align:center; margin-top:30px;">
+                    <button class="btn-action" onclick="startExam()">PROCEED TO EXAM</button>
+                </div>
+            </div>
+
+            <div id="slide-2" class="quest-card hidden">
+                <h2 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-database" style="color:var(--neon-purple)"></i> DATA INGESTION
+                </h2>
+                <p>Command Required: Link the <strong>CSV Source</strong> to the <strong>Dataframe</strong>.</p>
+                
+                <div class="pipeline-zone">
+                    <div class="node active"><i class="fas fa-file-csv"></i>RAW</div>
+                    <div class="pipe-connection"><div class="pipe-flow" id="pipe-flow"></div></div>
+                    <div class="node" id="node-target"><i class="fas fa-table"></i>DF</div>
+                </div>
+
+                <div class="options-container">
+                    <button class="tech-btn" onclick="checkAnswer(this, true, 'pandas')">A) pd.read_csv('data.csv')</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'pandas')">B) pd.load_data('data.csv')</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'pandas')">C) pd.import_csv('data.csv')</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'pandas')">D) csv.to_pandas('data.csv')</button>
+                </div>
+            </div>
+
+            <div id="slide-3" class="quest-card hidden">
+                <h2 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-th" style="color:var(--neon-cyan)"></i> MATRIX CONSTRUCTION
+                </h2>
+                <p>Identify the NumPy constructor for this specific 1D array.</p>
+
+                <div class="matrix-grid">
+                    <div class="matrix-cell" id="c1">10</div>
+                    <div class="matrix-cell" id="c2">20</div>
+                    <div class="matrix-cell" id="c3">30</div>
+                </div>
+
+                <div class="options-container">
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'numpy')">A) np.list([10, 20, 30])</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, true, 'numpy')">B) np.array([10, 20, 30])</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'numpy')">C) np.grid(1, 3, val=[10,20,30])</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'numpy')">D) np.struct(10, 20, 30)</button>
+                </div>
+            </div>
+
+            <div id="slide-4" class="quest-card hidden">
+                <h2 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
+                    <i class="fas fa-chart-area" style="color:var(--neon-green)"></i> VISUALIZATION RENDER
+                </h2>
+                <p>Execute the command to plot the coordinates on the HUD.</p>
+
+                <div class="holo-canvas" id="holo-canvas">
+                    </div>
+
+                <div class="options-container">
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'plot')">A) plt.bar(x, y)</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, true, 'plot')">B) plt.plot(x, y)</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'plot')">C) plt.scatter(x, y)</button>
+                    <button class="tech-btn" onclick="checkAnswer(this, false, 'plot')">D) plt.draw_line(x, y)</button>
+                </div>
+            </div>
+
+            <div id="slide-5" class="quest-card hidden" style="align-items: center; justify-content: center; text-align: center;">
+                <div style="width: 150px; height: 150px; border-radius: 50%; border: 5px solid var(--neon-green); display: flex; align-items: center; justify-content: center; margin-bottom: 30px; box-shadow: 0 0 50px var(--neon-green);">
+                    <i class="fas fa-check" style="font-size: 4rem; color: var(--neon-green);"></i>
+                </div>
+                <h1 style="font-family: 'Orbitron'; font-size: 3rem; margin-bottom: 10px;">CERTIFIED</h1>
+                <p style="color: #aaa; margin-bottom: 30px;">Analyst Clearance Level: ALPHA</p>
+                <div style="display: flex; gap: 20px;">
+                    <button class="btn-action" onclick="window.location.reload()">RE-TAKE</button>
+                    <button class="btn-action" style="background: #333;" onclick="window.location.href='exam.html'">EXIT</button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div class="voice-toggle" id="voice-btn" onclick="toggleVoice()">
+        <i class="fas fa-volume-up"></i>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let currentSlide = 1;
+        let voiceEnabled = true;
+        let xp = 0;
+
+        // --- AI VOICE ENGINE ---
+        const synth = window.speechSynthesis;
+        let voices = [];
+
+        // Load voices (Chrome needs a delay/event)
+        window.speechSynthesis.onvoiceschanged = () => {
+            voices = synth.getVoices();
+        };
+
+        function speak(text) {
+            if (!voiceEnabled) return;
+            
+            synth.cancel();
+
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.rate = 1.0;
+            utterance.pitch = 1.0;
+            
+            const preferredVoice = voices.find(v => v.name.includes('Zira') || v.name.includes('Google US English'));
+            if (preferredVoice) utterance.voice = preferredVoice;
+
+            synth.speak(utterance);
+            logToComms(text);
+        }
+
+        function logToComms(text) {
+            const log = document.getElementById('comms-log');
+            const entry = document.createElement('div');
+            entry.className = 'log-entry';
+            entry.innerText = "> " + text;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight; // Auto scroll
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('voice-btn');
+            if(voiceEnabled) {
+                btn.classList.remove('muted');
+                btn.innerHTML = '<i class="fas fa-volume-up"></i>';
+                speak("Voice systems online.");
+            } else {
+                btn.classList.add('muted');
+                btn.innerHTML = '<i class="fas fa-volume-mute"></i>';
+                synth.cancel();
+            }
+        }
+
+        // --- GAME LOGIC ---
+
+        function openBriefing() {
+            document.getElementById('slide-1').classList.add('hidden');
+            document.getElementById('slide-briefing').classList.remove('hidden');
+            speak("Accessing Classified Archives. Study the data protocols.");
+        }
+
+        function closeBriefing() {
+            document.getElementById('slide-briefing').classList.add('hidden');
+            document.getElementById('slide-1').classList.remove('hidden');
+        }
+
+        function startExam() {
+            document.getElementById('slide-1').classList.add('hidden');
+            document.getElementById('slide-briefing').classList.add('hidden');
+            document.getElementById('slide-2').classList.remove('hidden');
+            currentSlide = 2;
+            speak("Welcome, Analyst. First challenge: Data Ingestion. Select the correct Pandas command.");
+        }
+
+        function checkAnswer(btn, isCorrect, type) {
+            // Disable buttons
+            const parent = btn.parentElement;
+            const buttons = parent.querySelectorAll('.tech-btn');
+            buttons.forEach(b => {
+                b.style.pointerEvents = 'none';
+                b.style.opacity = '0.5';
+            });
+
+            btn.style.opacity = '1';
+
+            if (isCorrect) {
+                btn.classList.add('correct');
+                xp += 150;
+                updateXP();
+                speak("Affirmative. Command accepted.");
+                
+                // Visual FX
+                if(type === 'pandas') {
+                    document.getElementById('pipe-flow').style.width = "100%";
+                    setTimeout(() => document.getElementById('node-target').classList.add('active'), 1000);
+                }
+                if(type === 'numpy') {
+                    document.querySelectorAll('.matrix-cell').forEach((c, i) => {
+                        setTimeout(() => c.classList.add('revealed'), i * 200);
+                    });
+                }
+                if(type === 'plot') {
+                    drawGraph();
+                }
+
+                // Advance
+                setTimeout(() => {
+                    if(currentSlide < 5) {
+                        transitionSlide(currentSlide, currentSlide + 1);
+                        playNextPrompt(currentSlide);
+                    }
+                }, 2000);
+
+            } else {
+                btn.classList.add('wrong');
+                speak("Negative. Syntax error detected. Try again.");
+                setTimeout(() => {
+                    buttons.forEach(b => {
+                        b.style.pointerEvents = 'auto';
+                        b.style.opacity = '1';
+                        b.classList.remove('wrong');
+                    });
+                }, 1500);
+            }
+        }
+
+        function drawGraph() {
+            const canvas = document.getElementById('holo-canvas');
+            for(let i=0; i<5; i++) {
+                let p = document.createElement('div');
+                p.className = 'data-point';
+                p.style.left = (i * 80 + 20) + "px";
+                p.style.bottom = (i * 30 + 20) + "px";
+                canvas.appendChild(p);
+                setTimeout(() => p.style.opacity = 1, i * 100);
+            }
+            let l = document.createElement('div');
+            l.className = 'data-line';
+            l.style.width = "350px";
+            l.style.bottom = "24px";
+            l.style.left = "24px";
+            l.style.transform = "rotate(-20deg)";
+            canvas.appendChild(l);
+            setTimeout(() => l.style.opacity = 1, 600);
+        }
+
+        function playNextPrompt(slideNum) {
+            if(slideNum === 3) speak("Constructing Matrix. Select the correct NumPy array definition.");
+            if(slideNum === 4) speak("Rendering Visualization. Choose the plotting function.");
+            if(slideNum === 5) speak("Congratulations. All modules complete. Certification granted.");
+        }
+
+        function transitionSlide(from, to) {
+            document.getElementById(`slide-${from}`).classList.add('hidden');
+            document.getElementById(`slide-${to}`).classList.remove('hidden');
+            currentSlide = to;
+        }
+
+        function updateXP() {
+            document.getElementById('xp-val').innerText = xp;
+            document.getElementById('xp-bar').style.width = (xp / 450 * 100) + "%";
+        }
+
+        window.onload = () => {
+            logToComms("System Initialized...");
+            logToComms("Waiting for user input...");
+        }
+
+    </script>
+</body>
+</html>

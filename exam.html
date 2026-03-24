@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examination Center</title>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Orbitron:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg-body: #05050c; /* Deep void black */
+            --bg-card: #0e0e16; /* Slightly lighter for cards */
+            --bg-card-hover: #13131f;
+            
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            
+            --border-color: #1f2937;
+            
+            /* Exact Neon Palette from Image */
+            --cyan: #06b6d4;
+            --red: #ef4444;
+            --green: #22c55e;
+            --purple: #a855f7;
+            --orange: #f59e0b;
+            --pink: #d946ef;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            padding: 40px 60px;
+        }
+
+        /* --- HEADER SECTION --- */
+        .header-container {
+            margin-bottom: 50px;
+        }
+
+        .page-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: white;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .page-subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 35px;
+        }
+
+        /* --- TABS --- */
+        .tabs-container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-tab {
+            text-decoration: none;
+            padding: 12px 28px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        /* Active Pink Tab */
+        .nav-tab.active {
+            background-color: var(--pink);
+            color: white;
+            box-shadow: 0 0 20px rgba(217, 70, 239, 0.4); /* Neon Glow */
+        }
+
+        /* Inactive Tab */
+        .nav-tab.inactive {
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+        }
+
+        .nav-tab.inactive:hover {
+            border-color: var(--text-muted);
+            color: white;
+        }
+
+        /* --- INFO PANEL --- */
+        .info-panel {
+            background: linear-gradient(180deg, rgba(6, 182, 212, 0.05) 0%, rgba(14, 14, 22, 0) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            padding: 25px 30px;
+            border-radius: 6px;
+            margin-bottom: 50px;
+        }
+
+        .info-title {
+            color: var(--cyan);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .info-steps {
+            list-style: none;
+            padding-left: 5px;
+        }
+
+        .info-steps li {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 25px;
+        }
+
+        /* Custom Numbering */
+        .info-steps li::before {
+            content: counter(list-item) "."; 
+            position: absolute;
+            left: 0;
+            color: var(--cyan);
+            font-weight: bold;
+        }
+
+        /* --- GRID LAYOUT --- */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr); /* Exactly 3 columns as per image */
+            gap: 25px;
+        }
+        
+        @media (max-width: 1100px) {
+            .cards-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 700px) {
+            .cards-grid { grid-template-columns: 1fr; }
+        }
+
+        /* --- CARD DESIGN --- */
+        .role-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none; /* Reset link styles */
+        }
+
+        /* Hover Effect: Glow Border & Lift */
+        .role-card:hover {
+            transform: translateY(-5px);
+            background-color: var(--bg-card-hover);
+            border-color: var(--theme-color);
+            box-shadow: 0 5px 20px rgba(0,0,0,0.5);
+        }
+
+        /* Theme Colors Scoping */
+        .theme-cyan   { --theme-color: var(--cyan); }
+        .theme-red    { --theme-color: var(--red); }
+        .theme-green  { --theme-color: var(--green); }
+        .theme-purple { --theme-color: var(--purple); }
+        .theme-orange { --theme-color: var(--orange); }
+        .theme-pink   { --theme-color: var(--pink); }
+
+        .card-icon {
+            width: 45px;
+            height: 45px;
+            border: 1px solid var(--theme-color);
+            border-radius: 8px; /* Slightly rounded square */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: var(--theme-color);
+            font-size: 1.2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2); /* Subtle shadow */
+            background: rgba(255,255,255,0.02);
+        }
+
+        .role-card:hover .card-icon {
+            background: var(--theme-color);
+            color: black;
+            box-shadow: 0 0 15px var(--theme-color);
+        }
+
+        .card-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.2rem;
+            color: var(--theme-color);
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
+        }
+
+        .card-desc {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            flex-grow: 1; /* Pushes bottom content down */
+        }
+
+        .skills-label {
+            font-size: 0.7rem;
+            color: #64748b;
+            font-weight: 700;
+            margin-bottom: 10px;
+            display: block;
+            letter-spacing: 0.5px;
+        }
+
+        .skills-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 25px;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--theme-color);
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            border: 1px solid transparent;
+        }
+        
+        .role-card:hover .tag {
+             border-color: rgba(255,255,255,0.1);
+        }
+
+        .start-btn {
+            color: var(--theme-color);
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: gap 0.2s;
+        }
+
+        .role-card:hover .start-btn {
+            gap: 15px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="header-container">
+        <h1 class="page-title">EXAMINATION CENTER</h1>
+        <p class="page-subtitle">Test your skills with AI-powered role-based exams or escape room challenges</p>
+        
+        <div class="tabs-container">
+            <a href="ai_role_exams.html" class="nav-tab active">
+                <i class="fa-solid fa-microchip"></i> AI ROLE EXAMS
+            </a>
+            <a href="escape-room.html" class="nav-tab inactive">
+                <i class="fa-solid fa-user-lock"></i> ESCAPE ROOMS
+            </a>
+        </div>
+    </div>
+
+    <div class="info-panel">
+        <h3 class="info-title"><i class="fa-solid fa-wand-magic-sparkles"></i> How AI Role Exams Work</h3>
+        <ol class="info-steps">
+            <li>Choose a career role you're interested in</li>
+            <li>AI teaches you theory and concepts for that role</li>
+            <li>Take beginner-level coding questions specific to the role</li>
+            <li>Get instant feedback and personalized recommendations</li>
+        </ol>
+    </div>
+
+    <div class="cards-grid">
+
+        <a href="exam_data_analyst.html" class="role-card theme-cyan">
+            <div class="card-icon"><i class="fa-solid fa-chart-column"></i></div>
+            <h3 class="card-title">Data Analyst</h3>
+            <p class="card-desc">Learn to analyze data, create visualizations, and extract insights using Python</p>
+            
+            <span class="skills-label">KEY SKILLS:</span>
+            <div class="skills-tags">
+                <span class="tag">Pandas</span>
+                <span class="tag">NumPy</span>
+                <span class="tag">Matplotlib</span>
+            </div>
+            
+            <div class="start-btn">START EXAM <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="exam_security.html" class="role-card theme-red">
+            <div class="card-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <h3 class="card-title">Cybersecurity Specialist</h3>
+            <p class="card-desc">Master security concepts, encryption, and protecting systems with Python</p>
+            
+            <span class="skills-label">KEY SKILLS:</span>
+            <div class="skills-tags">
+                <span class="tag">Encryption</span>
+                <span class="tag">Network Security</span>
+                <span class="tag">Cryptography</span>
+            </div>
+            
+            <div class="start-btn">START EXAM <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="exam_webdev.html" class="role-card theme-green">
+            <div class="card-icon"><i class="fa-solid fa-globe"></i></div>
+            <h3 class="card-title">Web Developer</h3>
+            <p class="card-desc">Build web applications and APIs using Python frameworks</p>
+            
+            <span class="skills-label">KEY SKILLS:</span>
+            <div class="skills-tags">
+                <span class="tag">Flask/FastAPI</span>
+                <span class="tag">REST APIs</span>
+                <span class="tag">Web Scraping</span>
+            </div>
+            
+            <div class="start-btn">START EXAM <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="exam_ml.html" class="role-card theme-purple">
+            <div class="card-icon"><i class="fa-solid fa-brain"></i></div>
+            <h3 class="card-title">ML Engineer</h3>
+            <p class="card-desc">Create machine learning models and AI solutions with Python</p>
+            
+            <span class="skills-label">KEY SKILLS:</span>
+            <div class="skills-tags">
+                <span class="tag">scikit-learn</span>
+                <span class="tag">TensorFlow</span>
+                <span class="tag">ML Algorithms</span>
+            </div>
+            
+            <div class="start-btn">START EXAM <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="exam_automation.html" class="role-card theme-orange">
+            <div class="card-icon"><i class="fa-solid fa-gears"></i></div>
+            <h3 class="card-title">Automation Engineer</h3>
+            <p class="card-desc">Automate tasks and workflows using Python scripts</p>
+            
+            <span class="skills-label">KEY SKILLS:</span>
+            <div class="skills-tags">
+                <span class="tag">Task Automation</span>
+                <span class="tag">Scripting</span>
+                <span class="tag">File Operations</span>
+            </div>
+            
+            <div class="start-btn">START EXAM <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+        <a href="exam_datascientist.html" class="role-card theme-pink">
+            <div class="card-icon"><i class="fa-solid fa-chart-line"></i></div>
+            <h3 class="card-title">Data Scientist</h3>
+            <p class="card-desc">Use statistical methods and ML to solve complex data problems</p>
+            
+            <span class="skills-label">KEY SKILLS:</span>
+            <div class="skills-tags">
+                <span class="tag">Statistics</span>
+                <span class="tag">ML Models</span>
+                <span class="tag">Data Visualization</span>
+            </div>
+            
+            <div class="start-btn">START EXAM <i class="fa-solid fa-arrow-right"></i></div>
+        </a>
+
+    </div>
+
+</body>
+</html>

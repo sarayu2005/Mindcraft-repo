@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Mindcraft Registration</title>
+  <link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans&display=swap" rel="stylesheet">
+  <style>
+    /* SAME CSS AS YOUR ORIGINAL */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: url('rm309-aew-001.jpg') no-repeat center center fixed;
+      background-size: cover;
+      height: 100vh; width: 100vw;
+      font-family: 'Pixelify Sans', sans-serif;
+      display: flex; flex-direction: column; align-items: center; color: #00ffff;
+    }
+    h1 { margin-top: 50px; font-size: 4rem; color: #00ffff; text-align: center; }
+    .form {
+      margin-top: 80px; background-color: rgba(0, 0, 0, 0.5);
+      padding: 50px; border-radius: 16px; display: flex; flex-direction: column;
+      gap: 25px; width: 400px; box-shadow: 0 0 20px #000;
+    }
+    label { font-size: 1.2rem; color: #00ffff; }
+    input {
+      padding: 12px; border: 2px solid #00ffff; background-color: rgba(0, 0, 0, 0.7);
+      color: #00ffff; border-radius: 8px; font-family: 'Pixelify Sans', sans-serif;
+      font-size: 1rem; transition: border-color 0.3s ease;
+    }
+    input:focus { border-color: #00ffff; outline: none; background-color: rgba(0, 0, 0, 0.85); }
+    .button-group { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; }
+    button {
+      flex: 1; padding: 12px; border: 2px solid #00ffff; background-color: rgba(0, 0, 0, 0.5);
+      color: #00ffff; border-radius: 8px; cursor: pointer; font-family: 'Pixelify Sans', sans-serif;
+      font-size: 1rem; transition: background-color 0.3s ease, transform 0.2s ease;
+    }
+    button:hover { background-color: rgba(0, 0, 0, 0.7); transform: scale(1.05); }
+    .password-requirements { font-size: 0.9rem; color: #888; margin-top: 5px; }
+    .message { margin-top: 15px; padding: 10px; border-radius: 5px; text-align: center; font-weight: bold; }
+    .success { background-color: rgba(0, 255, 0, 0.2); color: #00ff00; border: 1px solid #00ff00; }
+    .error { background-color: rgba(255, 0, 0, 0.2); color: #ff4444; border: 1px solid #ff4444; }
+  </style>
+</head>
+<body>
+  <h1>Create Account</h1>
+  <div class="form">
+    <label for="email">Gmail:</label>
+    <input type="email" id="email" placeholder="Enter your Gmail" required />
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" placeholder="Enter your Password" required />
+    
+    <label for="confirmPassword">Confirm Password:</label>
+    <input type="password" id="confirmPassword" placeholder="Confirm your Password" required />
+
+    <div class="button-group">
+      <button id="register">Create Account</button>
+      <button id="back">Back to Login</button>
+    </div>
+
+    <div id="message"></div>
+  </div>
+
+  <script>
+    const messageDiv = document.getElementById('message');
+    const registerBtn = document.getElementById('register');
+
+    function showMessage(text, type) {
+      messageDiv.textContent = text;
+      messageDiv.className = `message ${type}`;
+    }
+
+    document.getElementById("back").addEventListener("click", () => {
+      window.location.href = "login.html";
+    });
+
+    document.getElementById("register").addEventListener("click", async () => {
+      const email = document.getElementById("email").value.trim();
+      const password = document.getElementById("password").value;
+      const confirmPassword = document.getElementById("confirmPassword").value;
+
+      if (password !== confirmPassword) {
+        showMessage('Passwords do not match', 'error');
+        return;
+      }
+      
+      registerBtn.textContent = "Creating...";
+      
+      try {
+        const response = await fetch('/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+        });
+
+        if (response.ok) {
+            showMessage('Account Created! Redirecting...', 'success');
+            setTimeout(() => window.location.href = 'login.html', 2000);
+        } else {
+            showMessage('Failed to register (Email might exist)', 'error');
+            registerBtn.textContent = "Create Account";
+        }
+      } catch (e) {
+          showMessage('Server error', 'error');
+      }
+    });
+  </script>
+</body>
+</html>

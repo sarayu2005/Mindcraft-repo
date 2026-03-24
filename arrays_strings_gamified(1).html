@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protocol: Arrays & Strings</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;700&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #050505;
+            --panel-bg: #0a0a0a;
+            --neon-green: #00ff41;
+            --neon-red: #ff003c;
+            --dim-green: rgba(0, 255, 65, 0.1);
+            --dim-red: rgba(255, 0, 60, 0.1);
+            --text-main: #e0e0e0;
+            --border-color: #333;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Rajdhani', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+        }
+
+        /* --- VISUALS --- */
+        .grid-bg {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: linear-gradient(rgba(0, 255, 65, 0.03) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 255, 65, 0.03) 1px, transparent 1px);
+            background-size: 30px 30px;
+            z-index: -2; pointer-events: none;
+        }
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px; z-index: 999; pointer-events: none; opacity: 0.6;
+        }
+
+        /* --- LAYOUT --- */
+        .sidebar {
+            width: 300px; background: var(--panel-bg);
+            border-right: 2px solid var(--border-color);
+            display: flex; flex-direction: column; padding: 20px; z-index: 10;
+        }
+
+        .main-content {
+            flex: 1; position: relative; overflow-y: auto; padding: 40px;
+            display: flex; justify-content: center; align-items: flex-start;
+        }
+
+        /* --- SIDEBAR UI --- */
+        .brand {
+            font-size: 1.8em; color: var(--neon-red); text-transform: uppercase;
+            font-weight: 700; margin-bottom: 30px; letter-spacing: 2px;
+            border-bottom: 1px solid var(--neon-red); padding-bottom: 10px;
+        }
+        .stat-box {
+            background: var(--dim-green); border: 1px solid var(--neon-green);
+            padding: 15px; margin-bottom: 15px;
+        }
+        .stat-label { font-size: 0.8em; color: var(--neon-green); text-transform: uppercase; letter-spacing: 1px; }
+        .stat-value { font-size: 1.5em; font-weight: 700; color: white; }
+
+        .progress-wrapper { margin-top: auto; }
+        .progress-bar-bg { width: 100%; height: 8px; background: #222; margin-top: 10px; }
+        .progress-bar-fill { 
+            height: 100%; background: var(--neon-green); width: 0%; 
+            box-shadow: 0 0 10px var(--neon-green); transition: width 0.5s; 
+        }
+
+        /* --- TERMINAL WINDOW --- */
+        .terminal-window {
+            width: 100%; max-width: 900px;
+            background: rgba(10, 10, 10, 0.95);
+            border: 1px solid var(--border-color);
+            position: relative; display: flex; flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            min-height: 600px;
+        }
+        
+        .terminal-header {
+            background: #111; padding: 12px 20px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex; justify-content: space-between; align-items: center;
+            color: #666; font-family: 'Fira Code', monospace; font-size: 0.8em;
+        }
+
+        .btn-exit {
+            background: transparent; border: 1px solid var(--neon-red); color: var(--neon-red);
+            font-family: 'Rajdhani', sans-serif; font-weight: bold; padding: 5px 15px;
+            cursor: pointer; transition: 0.3s; letter-spacing: 1px;
+        }
+        .btn-exit:hover { background: var(--neon-red); color: black; box-shadow: 0 0 10px var(--neon-red); }
+
+        .terminal-body { padding: 40px; flex: 1; }
+
+        /* --- SLIDE CONTENT --- */
+        .slide { display: none; animation: flickerIn 0.3s ease-in-out; }
+        .slide.active { display: block; }
+        @keyframes flickerIn { 0% { opacity: 0; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        .slide-title {
+            font-size: 2.5em; color: white; text-transform: uppercase;
+            border-left: 5px solid var(--neon-red); padding-left: 20px; margin-bottom: 10px;
+        }
+        .slide-subtitle { color: #888; font-family: 'Fira Code', monospace; margin-bottom: 30px; padding-left: 25px;}
+
+        .content-box {
+            border: 1px solid var(--border-color); background: rgba(255, 255, 255, 0.02);
+            padding: 20px; margin-bottom: 20px;
+        }
+        .analogy-box {
+            border: 1px solid var(--neon-green); background: var(--dim-green);
+            color: #ccc; padding: 20px; margin-bottom: 20px; position: relative;
+        }
+        .analogy-box::before { content: '>> INTELLIGENCE'; position: absolute; top:-10px; left: 10px; background: black; padding: 0 5px; color: var(--neon-green); font-size: 0.8em;}
+
+        /* Code & Inputs */
+        .code-editor {
+            background: #000; border: 1px solid #333; padding: 20px;
+            font-family: 'Fira Code', monospace; color: var(--neon-green);
+            font-size: 0.9em; margin: 20px 0; border-left: 3px solid var(--neon-green);
+        }
+        .keyword { color: var(--neon-red); } .function { color: white; font-weight: bold; }
+        .comment { color: #555; } .string { color: #ffff00; }
+
+        .demo-input {
+            width: 100%; background: #000; border: 1px solid #333;
+            color: white; padding: 15px; font-family: 'Fira Code'; font-size: 1em; margin-bottom: 15px;
+        }
+        .demo-input:focus { outline: none; border-color: var(--neon-red); }
+        .demo-output { border: 1px dashed #444; padding: 15px; color: #888; font-family: 'Fira Code'; margin-top: 15px; }
+
+        /* --- NAVIGATION & COUNTER --- */
+        .navigation { 
+            display: flex; justify-content: space-between; align-items: center; 
+            margin-top: 40px; border-top: 1px solid #222; padding-top: 20px;
+        }
+
+        .btn {
+            background: black; border: 1px solid var(--text-main); color: var(--text-main);
+            padding: 12px 30px; font-family: 'Rajdhani', sans-serif; font-weight: 700;
+            text-transform: uppercase; cursor: pointer; transition: 0.2s;
+            clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+        }
+        .btn:hover:not(.btn-static):not(:disabled) { background: #222; }
+        .btn-primary { border-color: var(--neon-red); color: var(--neon-red); }
+        .btn-primary:hover:not(:disabled) { background: var(--neon-red); color: black; box-shadow: 0 0 15px var(--neon-red); }
+        .btn-success { border-color: var(--neon-green); color: var(--neon-green); }
+        .btn-success:hover:not(:disabled) { background: var(--neon-green); color: black; box-shadow: 0 0 15px var(--neon-green); }
+        
+        /* The Middle Counter Button */
+        .btn-static {
+            border-color: #444; color: #666; cursor: default; width: 200px; text-align: center;
+            background: rgba(0,0,0,0.5);
+        }
+
+        /* Visual Array */
+        .visual-array { display: flex; gap: 5px; margin: 20px 0; justify-content: center;}
+        .visual-element {
+            width: 50px; height: 50px; border: 1px solid var(--neon-green);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--neon-green); font-family: 'Fira Code'; font-weight: bold;
+            box-shadow: inset 0 0 10px var(--dim-green);
+        }
+
+        /* Quiz */
+        .quiz-option {
+            border: 1px solid #333; padding: 15px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;
+        }
+        .quiz-option:hover { border-color: var(--neon-green); background: var(--dim-green); }
+        .quiz-option.selected { background: #222; border-color: white; }
+        .quiz-option.correct { background: var(--neon-green); color: black; font-weight: bold; }
+        .quiz-option.wrong { background: var(--neon-red); color: black; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 5000;
+            display: none; align-items: center; justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+        
+        .modal-box {
+            background: #0a0a0a; border: 2px solid var(--neon-red);
+            padding: 40px; width: 500px; text-align: center;
+            box-shadow: 0 0 50px var(--dim-red);
+            position: relative;
+        }
+        .modal-title { font-size: 2em; color: var(--neon-red); margin-bottom: 10px; font-family: 'Rajdhani'; }
+        .modal-text { color: #ccc; margin-bottom: 30px; font-family: 'Fira Code'; font-size: 0.9em; }
+        
+        .modal-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .modal-btn {
+            padding: 20px; border: 1px solid #333; text-decoration: none; color: white;
+            display: block; transition: 0.3s; text-transform: uppercase; font-weight: bold;
+        }
+        .modal-btn:hover { transform: scale(1.02); }
+        
+        .link-base { border-color: var(--neon-green); color: var(--neon-green); }
+        .link-base:hover { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
+        
+        .link-map { border-color: var(--neon-red); color: var(--neon-red); }
+        .link-map:hover { background: var(--neon-red); color: black; box-shadow: 0 0 20px var(--neon-red); }
+
+        .close-modal {
+            margin-top: 20px; background: transparent; border: none; color: #666; cursor: pointer;
+            font-family: 'Fira Code'; text-decoration: underline;
+        }
+
+        /* Achievement Toast */
+        .achievement {
+            position: fixed; bottom: 30px; right: -400px;
+            background: black; border: 1px solid var(--neon-green);
+            padding: 15px 30px; display: flex; align-items: center; gap: 15px;
+            z-index: 2000; transition: right 0.4s ease;
+            box-shadow: 0 0 20px var(--dim-green);
+        }
+        .achievement.show { right: 30px; }
+        .achievement-icon { font-size: 2em; }
+        
+        .confetti { position: absolute; width: 5px; height: 5px; background: var(--neon-green); animation: fall 2s linear forwards; }
+        @keyframes fall { to { transform: translateY(100vh); opacity: 0; } }
+
+        /* Responsive */
+        @media(max-width: 800px) {
+            body { flex-direction: column; overflow-y: auto; }
+            .sidebar { width: 100%; height: auto; flex-direction: row; gap: 15px; align-items: center; flex-wrap: wrap; }
+            .main-content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="grid-bg"></div>
+    <div class="scanline"></div>
+
+    <div id="exitModal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-title">⚠️ SYSTEM ALERT</div>
+            <p class="modal-text">CONFIRM EXTRACTION POINT:</p>
+            <div class="modal-grid">
+                <a href="level.html" class="modal-btn link-base">
+                    [ < ] RETURN TO BASE
+                </a>
+                <a href="3.topic map.html" class="modal-btn link-map">
+                    [ # ] OPEN TACTICAL MAP
+                </a>
+            </div>
+            <button class="close-modal" onclick="closeExitModal()">[ CANCEL OPERATION ]</button>
+        </div>
+    </div>
+
+    <aside class="sidebar">
+        <div class="brand">OPS: CODELEARN</div>
+        <div class="stat-box">
+            <div class="stat-label">Operator Level</div>
+            <div class="stat-value" id="level">1</div>
+        </div>
+        <div class="stat-box" style="border-color: var(--neon-red); background: var(--dim-red);">
+            <div class="stat-label">EXP Gained</div>
+            <div class="stat-value"><span id="xp">0</span> XP</div>
+        </div>
+        <div class="progress-wrapper">
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressBar"></div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="terminal-window">
+            <div class="terminal-header">
+                <span>/SYS/PROTOCOLS/ARRAYS_STRINGS.EXE</span>
+                <button class="btn-exit" onclick="openExitModal()">[ X ] ABORT</button>
+            </div>
+            
+            <div class="terminal-body">
+                
+                <div class="slide active" data-slide="1">
+                    <h1 class="slide-title">Mission Briefing</h1>
+                    <p class="slide-subtitle">Target: Arrays & Strings Mastery</p>
+                    <div class="content-box">
+                        <h3 style="color: var(--neon-green); margin-bottom: 10px;">>> OBJECTIVES</h3>
+                        <ul style="list-style: none; line-height: 1.8; color: #ccc;">
+                            <li>[ ] Two Pointers Pattern</li>
+                            <li>[ ] Sliding Window Technique</li>
+                            <li>[ ] Prefix Sum Magic</li>
+                        </ul>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" style="visibility: hidden;">Prev</button>
+                        <button class="btn btn-static slide-counter">1 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Accept Mission >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="2">
+                    <h1 class="slide-title">Protocol: Two Pointers</h1>
+                    <p class="slide-subtitle">Strategy: Pincer Movement</p>
+                    <div class="analogy-box">
+                        <p><strong>TACTIC:</strong> Scanning a tunnel. Deploy two units at opposite ends. Converge on center.</p>
+                    </div>
+                    <div class="content-box">
+                        <h3 style="color:white; margin-bottom:10px;">DEPLOY WHEN:</h3>
+                        <ul style="color:#888; margin-left:20px;">
+                            <li>Array is sorted</li>
+                            <li>Finding pairs (Two Sum)</li>
+                        </ul>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">2 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Access Code >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="3">
+                    <h1 class="slide-title">Task: Valid Palindrome</h1>
+                    <p class="slide-subtitle">Verify Symmetry</p>
+                    <div class="code-editor">
+<span class="keyword">def</span> <span class="function">is_palindrome</span>(s):
+    left, right = <span class="number">0</span>, len(s) - <span class="number">1</span>
+    <span class="keyword">while</span> left < right:
+        <span class="keyword">if</span> s[left] != s[right]: <span class="keyword">return False</span>
+        left += <span class="number">1</span>; right -= <span class="number">1</span>
+    <span class="keyword">return True</span>
+                    </div>
+                    <div class="content-box">
+                        <input type="text" class="demo-input" id="palindromeInput" placeholder="Enter text...">
+                        <button class="btn btn-success" onclick="checkPalindrome()">EXECUTE CHECK</button>
+                        <div class="demo-output" id="palindromeOutput">// AWAITING DATA...</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">3 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Next >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="4">
+                    <h1 class="slide-title">Task: Two Sum II</h1>
+                    <p class="slide-subtitle">Target Acquisition</p>
+                    <div class="visual-array">
+                        <div class="visual-element">2</div>
+                        <div class="visual-element">7</div>
+                        <div class="visual-element">11</div>
+                        <div class="visual-element">15</div>
+                    </div>
+                    <p style="text-align:center; color:#888; font-family:'Fira Code'; margin-top:10px;">TARGET: 9 (2+7)</p>
+                    <div class="code-editor">
+<span class="keyword">while</span> left < right:
+    <span class="keyword">if</span> cur == target: <span class="keyword">return</span> [left, right]
+    <span class="keyword">elif</span> cur < target: left += <span class="number">1</span>
+    <span class="keyword">else</span>: right -= <span class="number">1</span>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">4 / 15</button>
+                        <button class="btn btn-primary" onclick="solveAndNext(4, 50)">Simulate Run >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="5">
+                    <h1 class="slide-title">Protocol: Sliding Window</h1>
+                    <p class="slide-subtitle">Dynamic Surveillance</p>
+                    <div class="analogy-box">
+                        <p><strong>TACTIC:</strong> Observation from a moving vehicle. Add new objects entering frame, remove old objects leaving frame.</p>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">5 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Analyze Code >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="6">
+                    <h1 class="slide-title">Task: Max Sum Subarray</h1>
+                    <div class="code-editor">
+<span class="keyword">for</span> i <span class="keyword">in</span> <span class="function">range</span>(k, len(arr)):
+    curr = curr + arr[i] - arr[i-k]
+    max_s = <span class="function">max</span>(max_s, curr)
+                    </div>
+                    <div class="content-box">
+                        <input type="text" class="demo-input" id="maxSumInput" placeholder="2,1,5,1,3,2">
+                        <input type="number" class="demo-input" id="maxSumK" placeholder="3">
+                        <button class="btn btn-success" onclick="calculateMaxSum()">RUN SCAN</button>
+                        <div class="demo-output" id="maxSumOutput">// AWAITING DATA...</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">6 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Next >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="7">
+                    <h1 class="slide-title">Task: Unique Substring</h1>
+                    <div class="content-box">
+                        <input type="text" class="demo-input" id="substringInput" placeholder="abcabcbb">
+                        <button class="btn btn-success" onclick="findLongestSubstring()">ANALYZE</button>
+                        <div class="demo-output" id="substringOutput">// AWAITING DATA...</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">7 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Next >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="8">
+                    <h1 class="slide-title">Protocol: Prefix Sum</h1>
+                    <div class="analogy-box">
+                        <p><strong>TACTIC:</strong> The Running Balance. Maintain a cumulative log. Access any range difference instantly.</p>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">8 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Analyze Code >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="9">
+                    <h1 class="slide-title">Task: Range Query</h1>
+                    <div class="code-editor">
+<span class="keyword">def</span> <span class="function">build_prefix</span>(arr):
+    pre = [<span class="number">0</span>]
+    <span class="keyword">for</span> x <span class="keyword">in</span> arr: pre.append(pre[-1] + x)
+    <span class="keyword">return</span> pre
+                    </div>
+                    <div class="content-box">
+                        <input type="text" class="demo-input" id="prefixInput" placeholder="1,2,3,4,5">
+                        <button class="btn btn-success" onclick="buildPrefix()">BUILD INDEX</button>
+                        <div class="demo-output" id="prefixOutput">// AWAITING DATA...</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">9 / 15</button>
+                        <button class="btn btn-primary" onclick="nextSlide()">Next >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="10">
+                    <h1 class="slide-title">Task: Sum Equals K</h1>
+                    <div class="code-editor">
+<span class="keyword">if</span> (curr - k) <span class="keyword">in</span> map:
+    count += map[curr - k]
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">10 / 15</button>
+                        <button class="btn btn-primary" onclick="solveAndNext(10, 75)">Simulate Run >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="11">
+                    <h1 class="slide-title">Tactical Assessment</h1>
+                    <div class="content-box">
+                        <p style="margin-bottom: 20px;">Optimal protocol for "Max sum of subarray size K"?</p>
+                        <div class="quiz-option" onclick="selectQuiz(1, 1, false)">A) Two Pointers</div>
+                        <div class="quiz-option" onclick="selectQuiz(1, 2, true)">B) Sliding Window</div>
+                        <div class="quiz-option" onclick="selectQuiz(1, 3, false)">C) Prefix Sum</div>
+                        <div class="quiz-option" onclick="selectQuiz(1, 4, false)">D) Binary Search</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">11 / 15</button>
+                        <button class="btn btn-primary" id="quiz1Next" onclick="nextSlide()" style="display:none;">Proceed >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="12">
+                    <h1 class="slide-title" style="color:var(--neon-red);">BOSS: 3SUM</h1>
+                    <div class="code-editor">
+<span class="keyword">while</span> left < right:
+    tot = nums[i] + nums[left] + nums[right]
+    <span class="keyword">if</span> tot == 0: res.append(...)
+    <span class="keyword">elif</span> tot < 0: left += 1
+    <span class="keyword">else</span>: right -= 1
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">12 / 15</button>
+                        <button class="btn btn-primary" onclick="solveAndNext(12, 100)">Analyze Logic >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="13">
+                    <h1 class="slide-title" style="color:var(--neon-red);">BOSS: RAIN WATER</h1>
+                    <div class="content-box"><p>Water at <code>i</code> = <code>min(max_left, max_right) - height[i]</code>.</p></div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">13 / 15</button>
+                        <button class="btn btn-primary" onclick="solveAndNext(13, 150)">Analyze Logic >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="14">
+                    <h1 class="slide-title">Final Assessment</h1>
+                    <div class="content-box">
+                        <p>Space Complexity of Two Pointers?</p>
+                        <div class="quiz-option" onclick="selectQuiz(2, 1, false)">A) O(n)</div>
+                        <div class="quiz-option" onclick="selectQuiz(2, 2, false)">B) O(n^2)</div>
+                        <div class="quiz-option" onclick="selectQuiz(2, 3, true)">C) O(1)</div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="prevSlide()"><< Prev</button>
+                        <button class="btn btn-static slide-counter">14 / 15</button>
+                        <button class="btn btn-primary" id="quiz2Next" onclick="nextSlide()" style="display:none;">View Report >></button>
+                    </div>
+                </div>
+
+                <div class="slide" data-slide="15">
+                    <h1 class="slide-title" style="color:var(--neon-green);">MISSION ACCOMPLISHED</h1>
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px;">
+                        <div class="stat-box">
+                            <div class="stat-label">Total XP</div>
+                            <div class="stat-value" id="finalXP">0</div>
+                        </div>
+                        <div class="stat-box">
+                            <div class="stat-label">Solved</div>
+                            <div class="stat-value" id="finalSolved">0</div>
+                        </div>
+                    </div>
+                    <div class="navigation">
+                        <button class="btn" onclick="restartCourse()">Reboot System</button>
+                        <button class="btn btn-success" onclick="window.location.href='mindcraft_linked_lists_complete.html'">Deploy to Next Sector >></button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <div class="achievement" id="achievement">
+        <div class="achievement-icon">🏆</div>
+        <div class="achievement-text">
+            <h3 id="achievementTitle">UNLOCKED</h3>
+            <p id="achievementDesc">Data Uploaded</p>
+        </div>
+    </div>
+
+    <script>
+        /* --- SYSTEM CORE --- */
+        let currentSlide = 1;
+        const totalSlides = 15;
+        let xp = 0;
+        let level = 1;
+        let problemsSolved = 0;
+        const solvedSlides = new Set();
+
+        function updateProgress() {
+            const pct = ((currentSlide - 1) / (totalSlides - 1)) * 100;
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('xp').textContent = xp;
+            document.getElementById('level').textContent = level;
+            
+            document.querySelectorAll('.slide-counter').forEach(el => {
+                el.textContent = `MISSION ${currentSlide} / ${totalSlides}`;
+            });
+        }
+
+        function nextSlide() {
+            if (currentSlide < totalSlides) {
+                document.querySelector('.slide.active').classList.remove('active');
+                currentSlide++;
+                document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+                updateProgress();
+            }
+        }
+
+        function prevSlide() {
+            if (currentSlide > 1) {
+                document.querySelector('.slide.active').classList.remove('active');
+                currentSlide--;
+                document.querySelector(`[data-slide="${currentSlide}"]`).classList.add('active');
+                updateProgress();
+            }
+        }
+
+        function solveAndNext(slideNum, xpGain) {
+            if (!solvedSlides.has(slideNum)) {
+                solvedSlides.add(slideNum);
+                xp += xpGain;
+                problemsSolved++;
+                
+                if(Math.floor(xp/200) + 1 > level) level++;
+                
+                showAchievement(`+${xpGain} XP`, 'PROTOCOL COMPLETE');
+                createConfetti();
+            }
+            updateProgress();
+            setTimeout(nextSlide, 1000);
+        }
+
+        /* --- MODAL LOGIC --- */
+        function openExitModal() {
+            document.getElementById('exitModal').style.display = 'flex';
+        }
+        function closeExitModal() {
+            document.getElementById('exitModal').style.display = 'none';
+        }
+
+        /* --- INTERACTIVE FUNCTIONS --- */
+        function checkPalindrome() {
+            const val = document.getElementById('palindromeInput').value.toLowerCase().replace(/[^a-z0-9]/g, '');
+            const rev = val.split('').reverse().join('');
+            const out = document.getElementById('palindromeOutput');
+            if(!val) { out.innerText = 'ERR: NO INPUT'; return; }
+            
+            if(val === rev) {
+                out.innerHTML = `<span style="color:var(--neon-green)">>> MATCH CONFIRMED</span>`;
+                solveAndNext(3, 50);
+            } else {
+                out.innerHTML = `<span style="color:var(--neon-red)">>> MISMATCH DETECTED</span>`;
+            }
+        }
+
+        function calculateMaxSum() {
+            const arr = document.getElementById('maxSumInput').value.split(',').map(Number);
+            const k = parseInt(document.getElementById('maxSumK').value);
+            const out = document.getElementById('maxSumOutput');
+            
+            if(arr.some(isNaN) || !k) { out.innerText = "ERR: INVALID DATA"; return; }
+            
+            let winSum = 0;
+            for(let i=0; i<k; i++) winSum += arr[i];
+            let maxS = winSum;
+            for(let i=k; i<arr.length; i++) {
+                winSum = winSum + arr[i] - arr[i-k];
+                maxS = Math.max(maxS, winSum);
+            }
+            out.innerHTML = `<span style="color:var(--neon-green)">>> MAX SUM: ${maxS}</span>`;
+            solveAndNext(6, 50);
+        }
+
+        function findLongestSubstring() {
+            const s = document.getElementById('substringInput').value;
+            const out = document.getElementById('substringOutput');
+            if(!s) { out.innerText = "ERR: NO DATA"; return; }
+            
+            let charSet = new Set();
+            let left = 0, res = 0;
+            for(let right=0; right<s.length; right++) {
+                while(charSet.has(s[right])) { charSet.delete(s[left]); left++; }
+                charSet.add(s[right]);
+                res = Math.max(res, right - left + 1);
+            }
+            out.innerHTML = `<span style="color:var(--neon-green)">>> MAX LEN: ${res}</span>`;
+            solveAndNext(7, 75);
+        }
+
+        function buildPrefix() {
+            const arr = document.getElementById('prefixInput').value.split(',').map(Number);
+            const out = document.getElementById('prefixOutput');
+            let pre = [0];
+            for(let n of arr) pre.push(pre[pre.length-1] + n);
+            out.innerHTML = `<span style="color:var(--neon-green)">>> INDEX: [${pre.join(', ')}]</span>`;
+            solveAndNext(9, 50);
+        }
+
+        function selectQuiz(quizNum, optIdx, isCorrect) {
+            const opts = document.querySelectorAll(`[data-slide="${currentSlide}"] .quiz-option`);
+            opts.forEach(o => o.classList.remove('selected', 'correct', 'wrong'));
+            
+            const selected = opts[optIdx-1];
+            if(isCorrect) {
+                selected.classList.add('correct');
+                xp += 25;
+                updateProgress();
+                document.getElementById(`quiz${quizNum}Next`).style.display = 'inline-block';
+            } else {
+                selected.classList.add('wrong');
+            }
+        }
+
+        function restartCourse() {
+            currentSlide = 1;
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.querySelector('[data-slide="1"]').classList.add('active');
+            updateProgress();
+        }
+
+        function showAchievement(title, desc) {
+            const toast = document.getElementById('achievement');
+            document.getElementById('achievementTitle').textContent = title;
+            document.getElementById('achievementDesc').textContent = desc;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+
+        function createConfetti() {
+            for(let i=0; i<30; i++) {
+                let c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + '%';
+                c.style.background = Math.random() > 0.5 ? '#00ff41' : '#ff003c';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 2000);
+            }
+        }
+
+        // Init
+        updateProgress();
+        setInterval(() => {
+            if (currentSlide === 15) {
+                document.getElementById('finalXP').textContent = xp;
+                document.getElementById('finalSolved').textContent = problemsSolved;
+            }
+        }, 500);
+
+    </script>
+</body>
+</html>

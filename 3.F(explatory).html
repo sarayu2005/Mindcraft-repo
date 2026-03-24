@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Function Explorer // Science Lab</title>
+    <style>
+        /* --- NEON LAB PALETTE --- */
+        :root {
+            --bg: #0b0c10;
+            --panel: #1f2833;
+            --neon-cyan: #66fcf1;
+            --neon-green: #45a29e;
+            --neon-pink: #c5c6c7; /* Using metallic white/grey for contrast */
+            --highlight: #ff0055;
+            --text-main: #fff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        h1 {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 20px var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 60px;
+            border-bottom: 2px solid var(--neon-cyan);
+            padding-bottom: 15px;
+        }
+
+        /* --- MODULE CONTAINER --- */
+        .module {
+            background: var(--panel);
+            border: 1px solid #333;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 50px;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module h2 {
+            margin-top: 0;
+            color: var(--neon-green);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            background: #000;
+            padding: 5px 10px;
+            border: 1px solid var(--neon-green);
+            color: var(--neon-green);
+            border-radius: 4px;
+        }
+
+        /* --- LAYOUT GRID --- */
+        .lab-bench {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 30px;
+            margin-top: 20px;
+        }
+        
+        .controls-area { flex: 1; min-width: 300px; }
+        .visual-area { flex: 1; min-width: 300px; display: flex; justify-content: center; align-items: center; background: #111; border-radius: 10px; min-height: 200px; position: relative;}
+
+        /* --- CODE SNIPPETS --- */
+        .code-display {
+            background: #000;
+            padding: 15px;
+            border-left: 3px solid var(--highlight);
+            color: #ddd;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+        .var { color: var(--neon-cyan); }
+        .val { color: #ff9900; }
+
+        /* --- SLIDERS (RGB) --- */
+        .slider-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #888; }
+        input[type="range"] { width: 100%; accent-color: var(--neon-cyan); }
+
+        /* --- VISUALS --- */
+        /* 1. Color Box */
+        #color-preview {
+            width: 150px;
+            height: 150px;
+            border: 4px solid #fff;
+            box-shadow: 0 0 30px rgba(255,255,255,0.2);
+            transition: background 0.1s;
+        }
+
+        /* 2. Burger Stack */
+        .burger-stack { display: flex; flex-direction: column-reverse; align-items: center; gap: 5px; }
+        .bun { width: 120px; height: 30px; background: #e6a15c; border-radius: 10px 10px 0 0; }
+        .bun.bottom { border-radius: 0 0 10px 10px; }
+        .patty { width: 130px; height: 20px; background: #5c3a21; border-radius: 5px; }
+        .cheese { width: 135px; height: 10px; background: #ffd700; border-radius: 2px; }
+        .lettuce { width: 135px; height: 10px; background: #00ff00; border-radius: 5px; }
+        .empty-slot { height: 10px; width: 100px; border: 1px dashed #555; display: flex; justify-content: center; color: #555; font-size: 0.7rem; align-items: center;}
+
+        /* 3. Return Logic */
+        .number-box {
+            font-size: 3rem;
+            font-weight: bold;
+            color: var(--neon-cyan);
+            border: 2px solid var(--neon-cyan);
+            padding: 20px;
+            border-radius: 10px;
+            transition: 0.3s;
+        }
+        .btn-action {
+            background: transparent;
+            border: 1px solid var(--neon-cyan);
+            color: var(--neon-cyan);
+            padding: 10px 20px;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 10px;
+        }
+        .btn-action:hover { background: rgba(102, 252, 241, 0.1); }
+        
+        .toggle-switch {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .toggle-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #555;
+            cursor: pointer;
+            text-align: center;
+            opacity: 0.5;
+        }
+        .toggle-btn.active {
+            border-color: var(--highlight);
+            color: var(--highlight);
+            opacity: 1;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Function Explorer // Lab</h1>
+
+    <div class="module">
+        <h2>
+            1. The RGB Mixer
+            <span class="badge">Multiple Parameters</span>
+        </h2>
+        <p style="color:#aaa;">Explore how a function accepts multiple distinct ingredients (arguments) to produce one result.</p>
+
+        <div class="lab-bench">
+            <div class="controls-area">
+                <div class="code-display">
+                    def set_color(<span class="var">r</span>, <span class="var">g</span>, <span class="var">b</span>):<br>
+                    &nbsp; return "rgb(" + r + "," + g + "," + b + ")"
+                </div>
+                
+                <div class="slider-group">
+                    <label>Parameter R (Red): <span id="val-r">0</span></label>
+                    <input type="range" id="rng-r" min="0" max="255" value="0" oninput="updateColor()">
+                </div>
+                <div class="slider-group">
+                    <label>Parameter G (Green): <span id="val-g">100</span></label>
+                    <input type="range" id="rng-g" min="0" max="255" value="100" oninput="updateColor()">
+                </div>
+                <div class="slider-group">
+                    <label>Parameter B (Blue): <span id="val-b">255</span></label>
+                    <input type="range" id="rng-b" min="0" max="255" value="255" oninput="updateColor()">
+                </div>
+            </div>
+
+            <div class="visual-area">
+                <div id="color-preview" style="background: rgb(0, 100, 255);"></div>
+                <div style="position: absolute; bottom: 10px; font-size: 0.8rem; color: #888;">Function Output</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="module">
+        <h2>
+            2. The Burger Factory
+            <span class="badge">Default Arguments</span>
+        </h2>
+        <p style="color:#aaa;">Some parameters are optional. If you send nothing, the function uses a "Default". Explore overriding the default.</p>
+
+        <div class="lab-bench">
+            <div class="controls-area">
+                <div class="code-display">
+                    def make_burger(<span class="var">topping="Cheese"</span>):<br>
+                    &nbsp; # If input is empty, use Cheese
+                </div>
+                
+                <label>Send Argument?</label>
+                <div class="toggle-switch">
+                    <div class="toggle-btn active" onclick="setBurgerMode(false)" id="btn-default">No (Use Default)</div>
+                    <div class="toggle-btn" onclick="setBurgerMode(true)" id="btn-custom">Yes (Override)</div>
+                </div>
+
+                <div id="custom-input-group" style="display:none; margin-top:10px;">
+                    <label>Select Topping:</label>
+                    <select id="topping-select" onchange="renderBurger()" style="width:100%; padding:10px; background:#000; color:#fff; border:1px solid #555;">
+                        <option value="Lettuce">Lettuce</option>
+                        <option value="Bacon">Bacon (Red)</option>
+                        <option value="Double Patty">Double Patty</option>
+                    </select>
+                </div>
+
+                <div style="margin-top: 20px; font-family: monospace;">
+                    <strong>Current Call:</strong><br>
+                    <span id="burger-call" style="color:var(--highlight)">make_burger()</span>
+                </div>
+            </div>
+
+            <div class="visual-area">
+                <div class="burger-stack" id="burger-visual">
+                    </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="module">
+        <h2>
+            3. The Number Crusher
+            <span class="badge">Print vs Return</span>
+        </h2>
+        <p style="color:#aaa;"><strong>Print</strong> just shows text on a screen. <strong>Return</strong> gives you a value you can do math with.</p>
+
+        <div class="lab-bench">
+            <div class="controls-area">
+                <div class="code-display">
+                    def square_number(x):<br>
+                    &nbsp; <span id="code-keyword" style="color:var(--highlight)">return</span> x * x
+                </div>
+                
+                <label>Input Number (x):</label>
+                <input type="number" id="math-input" value="5" style="width:100%; padding:10px; background:#000; border:1px solid #555; color:#fff;">
+
+                <div style="display:flex; gap:10px; margin-top:15px;">
+                    <button class="btn-action" onclick="runMath('print')">Run with PRINT</button>
+                    <button class="btn-action" style="border-color:var(--highlight); color:var(--highlight);" onclick="runMath('return')">Run with RETURN</button>
+                </div>
+            </div>
+
+            <div class="visual-area" style="flex-direction: column; gap: 20px;">
+                <div class="number-box" id="math-output">0</div>
+                <div id="math-explanation" style="font-size: 0.8rem; text-align: center; max-width: 250px; color:#aaa;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. RGB MIXER LOGIC ---
+        function updateColor() {
+            const r = document.getElementById('rng-r').value;
+            const g = document.getElementById('rng-g').value;
+            const b = document.getElementById('rng-b').value;
+
+            document.getElementById('val-r').innerText = r;
+            document.getElementById('val-g').innerText = g;
+            document.getElementById('val-b').innerText = b;
+
+            const colorString = `rgb(${r}, ${g}, ${b})`;
+            document.getElementById('color-preview').style.background = colorString;
+        }
+
+        // --- 2. BURGER FACTORY LOGIC ---
+        let useCustomTopping = false;
+
+        function setBurgerMode(isCustom) {
+            useCustomTopping = isCustom;
+            
+            // Toggle UI logic
+            document.getElementById('btn-default').className = isCustom ? 'toggle-btn' : 'toggle-btn active';
+            document.getElementById('btn-custom').className = isCustom ? 'toggle-btn active' : 'toggle-btn';
+            
+            document.getElementById('custom-input-group').style.display = isCustom ? 'block' : 'none';
+            
+            renderBurger();
+        }
+
+        function renderBurger() {
+            const visual = document.getElementById('burger-visual');
+            const callText = document.getElementById('burger-call');
+            visual.innerHTML = ''; // Clear
+
+            // Add Bottom Bun
+            visual.innerHTML += '<div class="bun bottom"></div>';
+            visual.innerHTML += '<div class="patty"></div>';
+
+            if (useCustomTopping) {
+                const topping = document.getElementById('topping-select').value;
+                callText.innerText = `make_burger("${topping}")`;
+                
+                if(topping === 'Lettuce') visual.innerHTML += '<div class="lettuce"></div>';
+                else if(topping === 'Bacon') visual.innerHTML += '<div style="width:130px; height:8px; background:#d63031; border-radius:4px;"></div>';
+                else if(topping === 'Double Patty') visual.innerHTML += '<div class="patty"></div>';
+            } else {
+                callText.innerText = `make_burger()`; // Empty = Default
+                visual.innerHTML += '<div class="cheese"></div>';
+                visual.innerHTML += '<div style="color:var(--highlight); font-size:0.8rem;">(Default Applied)</div>';
+            }
+
+            // Add Top Bun
+            visual.innerHTML += '<div class="bun"></div>';
+        }
+
+        // --- 3. MATH CRUSHER LOGIC ---
+        function runMath(mode) {
+            const input = parseInt(document.getElementById('math-input').value) || 0;
+            const result = input * input;
+            const outputBox = document.getElementById('math-output');
+            const explain = document.getElementById('math-explanation');
+            const codeKw = document.getElementById('code-keyword');
+
+            outputBox.innerText = result;
+
+            if (mode === 'print') {
+                codeKw.innerText = "print";
+                outputBox.style.color = "#888"; // Dull color for print
+                outputBox.style.borderColor = "#888";
+                explain.innerText = "Output printed to console. It is 'dead' text. You cannot add + 10 to it.";
+                explain.style.color = "#888";
+            } else {
+                codeKw.innerText = "return";
+                outputBox.style.color = "var(--highlight)";
+                outputBox.style.borderColor = "var(--highlight)";
+                explain.innerHTML = `Function returned <strong>${result}</strong>.<br>Since it returned a value, we can use it! Next value: ${result + 10}`;
+                explain.style.color = "#fff";
+            }
+        }
+
+        // Init
+        renderBurger();
+
+    </script>
+</body>
+</html>

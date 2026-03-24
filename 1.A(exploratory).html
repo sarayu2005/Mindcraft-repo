@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Array Explorer: Cyber Deck</title>
+    <style>
+        /* --- NEON PALETTE (CYBER DECK THEME) --- */
+        :root {
+            --bg-color: #020204;
+            --panel-bg: #0a0a0c;
+            --neon-purple: #d500f9;
+            --neon-blue: #00e5ff;
+            --neon-green: #00e676;
+            --neon-red: #ff1744;
+            --text-main: #cfd8dc;
+            --grid-line: rgba(0, 229, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            background-image: 
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', monospace; /* Monospace for coding feel */
+            margin: 0;
+            padding: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--neon-purple);
+            text-shadow: 0 0 10px var(--neon-purple);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            border: 2px solid var(--neon-purple);
+            padding: 15px 30px;
+            border-radius: 4px;
+            background: rgba(213, 0, 249, 0.05);
+        }
+
+        /* --- EXPLORATION MODULES --- */
+        .module {
+            background: var(--panel-bg);
+            border: 1px solid #333;
+            border-left: 5px solid var(--neon-blue);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 50px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            position: relative;
+        }
+
+        .module h2 {
+            margin-top: 0;
+            color: var(--neon-blue);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .mission-badge {
+            font-size: 0.8rem;
+            background: var(--neon-blue);
+            color: #000;
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        /* --- MISSION 1: MYSTERY BOXES --- */
+        .mystery-row {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .mystery-box {
+            width: 80px;
+            height: 80px;
+            background: #111;
+            border: 2px dashed #444;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .mystery-box:hover {
+            border-color: var(--neon-green);
+            box-shadow: 0 0 15px var(--neon-green);
+        }
+
+        .mystery-box.revealed {
+            border-style: solid;
+            background: rgba(0, 230, 118, 0.1);
+            color: var(--neon-green);
+            border-color: var(--neon-green);
+        }
+
+        .index-tag {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        /* --- MISSION 2: 2D GRID --- */
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            max-width: 300px;
+            margin: 20px auto;
+        }
+
+        .grid-cell {
+            aspect-ratio: 1;
+            background: #1a1a1a;
+            border: 1px solid #444;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: crosshair;
+            transition: 0.2s;
+        }
+
+        .grid-cell:hover {
+            background: var(--neon-purple);
+            color: #fff;
+            box-shadow: 0 0 20px var(--neon-purple);
+            z-index: 2;
+        }
+
+        .coord-label {
+            font-size: 0.8rem;
+            opacity: 0.5;
+        }
+
+        /* --- TERMINAL OUTPUT --- */
+        .terminal {
+            background: #000;
+            border-top: 2px solid #333;
+            margin-top: 20px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            color: var(--neon-green);
+            min-height: 40px;
+        }
+
+        .error { color: var(--neon-red); }
+
+        .btn-action {
+            margin-top: 20px;
+            background: transparent;
+            border: 1px solid var(--neon-purple);
+            color: var(--neon-purple);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+        .btn-action:hover {
+            background: var(--neon-purple);
+            color: #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Array // Explorer_Mode</h1>
+
+    <div class="module">
+        <h2>
+            Mission 01: The Mixed Bag
+            <span class="mission-badge">CONCEPT: DYNAMIC TYPES</span>
+        </h2>
+        <p>In some languages, arrays can only hold numbers. In Python, a list is a "Chaos Container". It can hold <strong>anything</strong>. Click the boxes to see what type of data is hiding at each index.</p>
+        
+        <div class="mystery-row" id="mysteryRow">
+            </div>
+
+        <div class="terminal" id="term-1">
+            > SYSTEM READY. Awaiting input at index...
+        </div>
+    </div>
+
+    <div class="module">
+        <h2>
+            Mission 02: The Glitch Fixer
+            <span class="mission-badge">CONCEPT: MUTABILITY</span>
+        </h2>
+        <p>Arrays are <strong>Mutable</strong>. This means you can change them after they are created. The list below has a glitch at <code>Index 2</code>. Click the button to run the patch code.</p>
+
+        <div style="font-size: 2rem; text-align: center; margin: 20px; letter-spacing: 10px;">
+            <span id="char-0">H</span><span id="char-1">E</span><span id="char-2" style="color:var(--neon-red)">?</span><span id="char-3">L</span><span id="char-4">O</span>
+        </div>
+
+        <div style="text-align: center;">
+            <code>current_list = ["H", "E", <span style="color:var(--neon-red)">"?"</span>, "L", "O"]</code>
+        </div>
+
+        <button class="btn-action" onclick="fixGlitch()">Run: current_list[2] = "L"</button>
+
+        <div class="terminal" id="term-2">
+            > ERROR DETECTED at Index 2.
+        </div>
+    </div>
+
+    <div class="module">
+        <h2>
+            Mission 03: The Grid (2D Lists)
+            <span class="mission-badge">CONCEPT: NESTED LISTS</span>
+        </h2>
+        <p>Used heavily in game development (tile maps, chess boards). This is a <strong>List of Lists</strong>. </p>
+        <p style="text-align: center; color: #888;">HOVER over a cell to see its Python Address.</p>
+
+        <div class="grid-container" id="gridMap">
+            </div>
+
+        <div class="terminal" id="term-3">
+            > MOUSE HOVER: Exploring Map Coordinates...
+        </div>
+    </div>
+
+    <script>
+        // --- MISSION 1 LOGIC ---
+        const mysteryData = [
+            { val: "42", type: "Integer" },
+            { val: "'Hi'", type: "String" },
+            { val: "True", type: "Boolean" },
+            { val: "3.14", type: "Float" },
+            { val: "[]", type: "List" }
+        ];
+
+        const row = document.getElementById('mysteryRow');
+        const term1 = document.getElementById('term-1');
+
+        mysteryData.forEach((item, index) => {
+            let box = document.createElement('div');
+            box.className = 'mystery-box';
+            box.innerHTML = `?<div class='index-tag'>Idx ${index}</div>`;
+            
+            box.onclick = () => {
+                box.classList.add('revealed');
+                box.innerHTML = `${item.val}<div class='index-tag'>Idx ${index}</div>`;
+                term1.innerHTML = `> ACCESSING index[${index}]...<br>> VALUE: ${item.val}<br>> TYPE: <span style="color:white">${item.type}</span>`;
+            };
+            
+            row.appendChild(box);
+        });
+
+
+        // --- MISSION 2 LOGIC ---
+        function fixGlitch() {
+            const char2 = document.getElementById('char-2');
+            const term2 = document.getElementById('term-2');
+            
+            // Visual update
+            char2.innerText = "L";
+            char2.style.color = "var(--neon-green)";
+            
+            // Console update
+            term2.innerHTML = `> EXECUTING: current_list[2] = "L"<br>> SUCCESS: List is now ["H", "E", "L", "L", "O"]`;
+        }
+
+
+        // --- MISSION 3 LOGIC (2D ARRAYS) ---
+        // 3x3 Grid
+        const grid = document.getElementById('gridMap');
+        const term3 = document.getElementById('term-3');
+
+        for(let r=0; r<3; r++) {
+            for(let c=0; c<3; c++) {
+                let cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                
+                // Add some content to make it look like a map
+                if(r===1 && c===1) cell.innerText = "🏰"; // Castle in middle
+                else cell.innerText = "🌲"; // Forest elsewhere
+
+                cell.onmouseover = () => {
+                    term3.innerHTML = `> TARGET: <span style="color:var(--neon-blue)">map[${r}][${c}]</span><br>> ROW: ${r}, COL: ${c}`;
+                };
+
+                cell.onclick = () => {
+                    cell.style.background = "var(--neon-green)";
+                    cell.innerText = "🚩";
+                    term3.innerHTML = `> UPDATE: map[${r}][${c}] = "Flag"`;
+                };
+
+                grid.appendChild(cell);
+            }
+        }
+
+    </script>
+</body>
+</html>

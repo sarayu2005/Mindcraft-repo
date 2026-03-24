@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>The Loop Gym: Infinite Reps</title>
+    <style>
+        /* --- NEON GYM PALETTE --- */
+        :root {
+            --bg: #050505;
+            --panel: #0f0f13;
+            --neon-cyan: #00e5ff;
+            --neon-pink: #f50057;
+            --neon-green: #00e676;
+            --neon-yellow: #ffea00;
+            --text-main: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            user-select: none; /* Prevent highlighting for speed */
+        }
+
+        /* --- HEADS UP DISPLAY --- */
+        .hud {
+            display: flex;
+            justify-content: space-between;
+            width: 90%;
+            max-width: 500px;
+            margin-bottom: 20px;
+            font-family: 'Courier New', monospace;
+            font-size: 1.2rem;
+            text-transform: uppercase;
+        }
+
+        .streak-counter {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 10px var(--neon-cyan);
+        }
+        
+        .score-counter {
+            color: var(--neon-yellow);
+        }
+
+        /* --- MAIN CARD --- */
+        .gym-card {
+            background: var(--panel);
+            border: 2px solid #333;
+            border-top: 5px solid var(--neon-cyan);
+            border-radius: 15px;
+            padding: 40px;
+            width: 90%;
+            max-width: 500px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(0,0,0,0.6);
+            position: relative;
+        }
+
+        .question-label {
+            color: #888;
+            font-size: 0.9rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 20px;
+        }
+
+        /* --- CODE DISPLAY area --- */
+        .code-display {
+            background: #000;
+            border: 1px dashed #444;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', monospace;
+            font-size: 1.4rem;
+            color: #fff;
+            margin-bottom: 30px;
+            text-align: left;
+            position: relative;
+        }
+
+        .highlight { color: var(--neon-pink); font-weight: bold; }
+        .var { color: var(--neon-cyan); }
+        .func { color: var(--neon-green); }
+
+        /* --- ANSWER GRID --- */
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        button {
+            background: transparent;
+            border: 2px solid #444;
+            color: #fff;
+            padding: 20px 10px;
+            font-size: 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.1s;
+            font-weight: bold;
+        }
+
+        button:active { transform: scale(0.95); }
+        button:hover { border-color: var(--neon-cyan); background: rgba(0, 229, 255, 0.1); }
+
+        /* --- FEEDBACK STATES --- */
+        .correct {
+            background: var(--neon-green) !important;
+            border-color: var(--neon-green) !important;
+            color: #000 !important;
+            box-shadow: 0 0 20px var(--neon-green);
+        }
+
+        .wrong {
+            background: var(--neon-pink) !important;
+            border-color: var(--neon-pink) !important;
+            animation: shake 0.4s;
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            50% { transform: translateX(10px); }
+            75% { transform: translateX(-10px); }
+            100% { transform: translateX(0); }
+        }
+
+        /* --- EXPLANATION OVERLAY --- */
+        .explanation {
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #aaa;
+            height: 40px; /* fixed height to prevent jumping */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="hud">
+        <div class="streak-counter">STREAK: <span id="streak">0</span> 🔥</div>
+        <div class="score-counter">XP: <span id="xp">0</span></div>
+    </div>
+
+    <div class="gym-card">
+        <div class="question-label" id="q-type">ITERATION DRILL</div>
+        
+        <div class="code-display" id="code-box">
+            </div>
+
+        <div class="button-grid" id="btn-container">
+            </div>
+
+        <div class="explanation" id="explain-txt"></div>
+    </div>
+
+    <script>
+        // --- GAME STATE ---
+        let streak = 0;
+        let xp = 0;
+        let currentAnswer = 0;
+        let isLocked = false; // Prevent double clicking
+
+        // --- GENERATORS ---
+        
+        // 1. Simple Range: range(5)
+        function genSimpleRange() {
+            const num = Math.floor(Math.random() * 8) + 2; // 2 to 9
+            return {
+                code: `<span class="highlight">for</span> i <span class="highlight">in</span> <span class="func">range</span>(${num}):<br>&nbsp;&nbsp;print(i)`,
+                ans: num,
+                question: "How many times does this print?",
+                explain: `range(${num}) starts at 0 and stops BEFORE ${num}.`
+            };
+        }
+
+        // 2. Start/Stop Range: range(2, 6)
+        function genStartStop() {
+            const start = Math.floor(Math.random() * 5);
+            const stop = start + Math.floor(Math.random() * 5) + 2; // Ensure at least 2 loops
+            const ans = stop - start;
+            return {
+                code: `<span class="highlight">for</span> i <span class="highlight">in</span> <span class="func">range</span>(${start}, ${stop}):<br>&nbsp;&nbsp;print(i)`,
+                ans: ans,
+                question: "How many times does this print?",
+                explain: `Math: Stop (${stop}) - Start (${start}) = ${ans}`
+            };
+        }
+
+        // 3. Step Range: range(0, 10, 2)
+        function genStepRange() {
+            const step = Math.floor(Math.random() * 2) + 2; // 2 or 3
+            const count = Math.floor(Math.random() * 4) + 2; // 2 to 5 iterations
+            const start = 0;
+            const stop = (count * step); 
+            // example: count 3, step 2 -> range(0, 6, 2) -> 0, 2, 4 (3 items)
+            
+            return {
+                code: `<span class="highlight">for</span> i <span class="highlight">in</span> <span class="func">range</span>(${start}, ${stop}, ${step}):<br>&nbsp;&nbsp;print(i)`,
+                ans: count,
+                question: "How many times does this print?",
+                explain: `It counts by ${step}s: 0, ${step}, ${step*2}...`
+            };
+        }
+
+        // 4. While Logic: x < 5
+        function genWhile() {
+            const limit = Math.floor(Math.random() * 5) + 3; // 3 to 7
+            return {
+                code: `x = 0<br><span class="highlight">while</span> x < ${limit}:<br>&nbsp;&nbsp;x = x + 1`,
+                ans: limit,
+                question: "What is the final value of X?",
+                explain: `The loop adds 1 until x is no longer < ${limit}.`
+            };
+        }
+
+        // --- CORE LOGIC ---
+
+        function nextRound() {
+            isLocked = false;
+            document.getElementById('explain-txt').innerText = "";
+            document.getElementById('explain-txt').style.color = "#aaa";
+
+            // Pick a difficulty based on streak (Basic Progression)
+            let drill;
+            const roll = Math.random();
+
+            if (streak < 3) {
+                drill = genSimpleRange(); // Warm up
+            } else if (streak < 8) {
+                // Mix simple and start/stop
+                drill = roll > 0.5 ? genStartStop() : genSimpleRange();
+            } else {
+                // Add Steps and Whiles
+                if (roll < 0.33) drill = genStartStop();
+                else if (roll < 0.66) drill = genStepRange();
+                else drill = genWhile();
+            }
+
+            // Update UI
+            document.getElementById('q-type').innerText = drill.question;
+            document.getElementById('code-box').innerHTML = drill.code;
+            currentAnswer = drill.ans;
+            window.currentExplanation = drill.explain;
+
+            generateButtons(currentAnswer);
+        }
+
+        function generateButtons(correctVal) {
+            const container = document.getElementById('btn-container');
+            container.innerHTML = '';
+
+            // Generate distractors (wrong answers)
+            let options = new Set();
+            options.add(correctVal);
+
+            while(options.size < 3) {
+                // Create random number close to correct answer (+- 2)
+                let offset = Math.floor(Math.random() * 5) - 2;
+                let val = correctVal + offset;
+                if(val >= 0) options.add(val);
+            }
+
+            // Convert to array and shuffle
+            let btnArray = Array.from(options).sort(() => Math.random() - 0.5);
+
+            btnArray.forEach(val => {
+                let btn = document.createElement('button');
+                btn.innerText = val;
+                btn.onclick = () => check(val, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        function check(val, btn) {
+            if(isLocked) return;
+            isLocked = true;
+
+            if (val === currentAnswer) {
+                // Correct
+                btn.classList.add('correct');
+                streak++;
+                xp += (10 + (streak * 2));
+                document.getElementById('explain-txt').innerText = "CORRECT! Loading next...";
+                document.getElementById('explain-txt').style.color = "var(--neon-green)";
+                setTimeout(nextRound, 800); // Fast transition
+            } else {
+                // Wrong
+                btn.classList.add('wrong');
+                streak = 0;
+                document.getElementById('explain-txt').innerText = "WRONG: " + window.currentExplanation;
+                document.getElementById('explain-txt').style.color = "var(--neon-pink)";
+                setTimeout(nextRound, 2500); // Slower transition to read explanation
+            }
+
+            updateHud();
+        }
+
+        function updateHud() {
+            document.getElementById('streak').innerText = streak;
+            document.getElementById('xp').innerText = xp;
+        }
+
+        // Start
+        nextRound();
+
+    </script>
+</body>
+</html>

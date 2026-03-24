@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Mini-Bot</title>
+    <style>
+        :root {
+            --bg-dark: #0f0c1d;
+            --purple-main: #6b3fa0;
+            --purple-light: #9d72ff;
+            --text-gray: #e0e0e0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: transparent; /* Allows it to blend into your current page */
+            margin: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        #chat-container {
+            width: 350px;
+            height: 450px;
+            background-color: var(--bg-dark);
+            border: 1px solid var(--purple-main);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        #chat-header {
+            background: var(--purple-main);
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+            text-align: center;
+            font-size: 0.9rem;
+        }
+
+        #messages {
+            flex: 1;
+            padding: 15px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .msg {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
+        .user-msg {
+            align-self: flex-end;
+            background: var(--purple-main);
+            color: white;
+        }
+
+        .bot-msg {
+            align-self: flex-start;
+            background: #251b3d;
+            color: var(--text-gray);
+            border: 1px solid #443361;
+        }
+
+        #input-area {
+            display: flex;
+            padding: 10px;
+            background: #1a162d;
+            border-top: 1px solid #332a52;
+        }
+
+        input {
+            flex: 1;
+            background: #0f0c1d;
+            border: 1px solid var(--purple-main);
+            color: white;
+            padding: 8px;
+            border-radius: 4px;
+            outline: none;
+        }
+
+        button {
+            background: var(--purple-main);
+            border: none;
+            color: white;
+            margin-left: 5px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover { background: var(--purple-light); }
+
+        /* Scrollbar styling */
+        #messages::-webkit-scrollbar { width: 5px; }
+        #messages::-webkit-scrollbar-thumb { background: var(--purple-main); border-radius: 10px; }
+    </style>
+</head>
+<body>
+
+<div id="chat-container">
+    <div id="chat-header">Python Help Bot</div>
+    <div id="messages">
+        <div class="msg bot-msg">Hi! Ask me any Python question. I'll keep it short!</div>
+    </div>
+    <div id="input-area">
+        <input type="text" id="userInput" placeholder="Type here..." onkeypress="if(event.key==='Enter') sendMessage()">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+    const API_KEY = "AIzaSyAn28f6m7W_ZPZlEyFsMCMfosTsE1QVpWc"; // REPLACE WITH YOUR ACTUAL KEY
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${API_KEY}`;
+
+    async function sendMessage() {
+        const inputField = document.getElementById('userInput');
+        const userText = inputField.value.trim();
+        if (!userText) return;
+
+        addMessage(userText, 'user-msg');
+        inputField.value = '';
+
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    contents: [{
+                        parts: [{ text: `Answer this Python question very briefly and concisely: ${userText}` }]
+                    }]
+                })
+            });
+
+            const data = await response.json();
+            const botResponse = data.candidates[0].content.parts[0].text;
+            addMessage(botResponse, 'bot-msg');
+        } catch (error) {
+            addMessage("Error: Check your API key or connection.", 'bot-msg');
+        }
+    }
+
+    function addMessage(text, className) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `msg ${className}`;
+        msgDiv.innerText = text;
+        const messagesContainer = document.getElementById('messages');
+        messagesContainer.appendChild(msgDiv);
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+</script>
+
+</body>
+</html>

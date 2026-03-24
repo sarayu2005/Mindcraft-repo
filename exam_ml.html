@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT: NEURAL NEXUS</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;600;800&family=Source+Code+Pro:wght@400;700&display=swap');
+
+        :root {
+            --bg-deep: #0a0015;
+            --bg-panel: rgba(20, 0, 40, 0.9);
+            --neon-purple: #bd00ff;
+            --neon-pink: #ff0055;
+            --neon-blue: #00f0ff;
+            --grid-line: rgba(189, 0, 255, 0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            background-color: var(--bg-deep);
+            background-image: 
+                radial-gradient(circle at 50% 50%, #2a003a 0%, transparent 70%),
+                linear-gradient(0deg, var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 100% 100%, 60px 60px, 60px 60px;
+            color: white;
+            font-family: 'Exo 2', sans-serif;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- START OVERLAY (FIX FOR AUDIO) --- */
+        #start-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(5, 0, 10, 0.98); z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .start-btn {
+            background: transparent; border: 2px solid var(--neon-blue); color: var(--neon-blue);
+            padding: 20px 50px; font-size: 1.5rem; font-family: 'Source Code Pro';
+            cursor: pointer; text-transform: uppercase; letter-spacing: 3px;
+            transition: 0.3s; margin-top: 20px;
+        }
+        .start-btn:hover { background: var(--neon-blue); color: black; box-shadow: 0 0 30px var(--neon-blue); }
+
+        /* --- HUD --- */
+        nav {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 40px; background: rgba(10, 0, 20, 0.95);
+            border-bottom: 2px solid var(--neon-purple); z-index: 100;
+        }
+        .logo { font-family: 'Exo 2', sans-serif; font-weight: 800; font-size: 2rem; letter-spacing: 2px; }
+        .logo span { color: var(--neon-pink); }
+        .stats { display: flex; gap: 30px; align-items: center; font-family: 'Source Code Pro', monospace; color: var(--neon-purple); }
+        .xp-pill { background: rgba(189,0,255,0.2); padding: 5px 15px; border-radius: 20px; border: 1px solid var(--neon-purple); }
+
+        /* --- LAYOUT --- */
+        .main-container { display: flex; height: 100%; }
+
+        /* SIDEBAR */
+        .sidebar {
+            width: 320px; background: var(--bg-panel); border-right: 1px solid var(--neon-purple);
+            display: flex; flex-direction: column; padding: 25px; position: relative;
+        }
+        .brain-container {
+            width: 150px; height: 150px; margin: 0 auto 30px; position: relative;
+            display: flex; justify-content: center; align-items: center;
+        }
+        .brain-ring {
+            position: absolute; border: 2px solid var(--neon-purple); border-radius: 50%;
+            width: 100%; height: 100%; animation: pulse-ring 3s infinite;
+        }
+        .brain-icon { font-size: 4rem; color: white; z-index: 2; text-shadow: 0 0 20px var(--neon-purple); transition: color 0.2s; }
+
+        .log-feed {
+            flex: 1; overflow-y: auto; font-family: 'Source Code Pro', monospace; font-size: 0.85rem; color: #d0d0ff;
+            background: rgba(0,0,0,0.3); padding: 10px; border-radius: 5px; border: 1px solid #330066;
+        }
+        .log-entry { margin-bottom: 8px; opacity: 0; animation: fadeIn 0.3s forwards; }
+        .log-entry span { color: var(--neon-pink); font-weight: bold; }
+
+        /* STAGE */
+        .stage { flex: 1; display: flex; justify-content: center; align-items: center; position: relative; padding: 40px; }
+        .card {
+            width: 100%; max-width: 950px; background: rgba(15, 0, 30, 0.9);
+            border: 1px solid var(--neon-purple); border-top: 5px solid var(--neon-pink);
+            border-radius: 15px; padding: 40px; min-height: 600px;
+            display: flex; flex-direction: column; position: relative; backdrop-filter: blur(10px);
+        }
+
+        /* --- VISUALS --- */
+        .neural-net { display: flex; justify-content: space-between; align-items: center; width: 400px; margin: 30px auto; }
+        .layer { display: flex; flex-direction: column; gap: 15px; }
+        .neuron { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #555; background: #222; transition: 0.3s; }
+        .neuron.active { background: var(--neon-pink); border-color: white; box-shadow: 0 0 20px var(--neon-pink); }
+        
+        .data-pool { width: 300px; height: 100px; border: 2px dashed #666; margin: 20px auto; display: flex; flex-wrap: wrap; gap: 5px; padding: 10px; justify-content: center; }
+        .data-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--neon-blue); transition: 0.5s; }
+        .data-dot.train { background: var(--neon-purple); }
+        .data-dot.test { background: var(--neon-pink); }
+
+        .descent-graph { width: 300px; height: 150px; border-bottom: 2px solid white; border-left: 2px solid white; margin: 20px auto; position: relative; overflow: hidden; }
+        .ball { width: 15px; height: 15px; background: var(--neon-pink); border-radius: 50%; position: absolute; top: 10px; left: 10px; transition: all 1s ease-in-out; }
+
+        /* --- BUTTONS --- */
+        .options { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: auto; }
+        .btn-opt {
+            background: rgba(0,0,0,0.4); border: 1px solid #555; color: #aaa;
+            padding: 20px; text-align: left; cursor: pointer; font-family: 'Source Code Pro';
+            transition: 0.2s; border-radius: 5px;
+        }
+        .btn-opt:hover { border-color: var(--neon-purple); color: white; background: rgba(189, 0, 255, 0.1); }
+        .btn-opt.correct { border-color: var(--neon-pink); background: rgba(255, 0, 85, 0.2); color: white; }
+        .btn-opt.wrong { border-color: red; color: red; opacity: 0.6; }
+
+        .btn-main {
+            background: linear-gradient(90deg, var(--neon-purple), var(--neon-pink)); border: none; color: white;
+            padding: 15px 40px; font-weight: 800; cursor: pointer; border-radius: 50px;
+            text-transform: uppercase; font-family: 'Exo 2'; font-size: 1.1rem;
+            box-shadow: 0 0 20px rgba(189,0,255,0.4); transition: 0.3s;
+        }
+        .btn-main:hover { transform: scale(1.05); }
+        .btn-sec { background: transparent; border: 2px solid var(--neon-purple); color: var(--neon-purple); padding: 12px 30px; font-weight: bold; cursor: pointer; border-radius: 50px; }
+
+        /* THEORY BOXES */
+        .archive-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
+        .archive-box { background: rgba(255,255,255,0.03); border: 1px solid #440066; padding: 20px; border-radius: 8px; }
+        .archive-title { color: var(--neon-blue); font-weight: 700; margin-bottom: 5px; }
+        .archive-desc { color: #ccc; font-size: 0.9rem; }
+
+        .hidden { display: none !important; }
+        @keyframes pulse-ring { 0% { transform: scale(0.8); opacity: 0.5; } 100% { transform: scale(1.2); opacity: 0; } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+        .voice-btn { position: fixed; bottom: 20px; right: 20px; width: 50px; height: 50px; border-radius: 50%; background: #111; border: 2px solid var(--neon-purple); color: var(--neon-purple); display:flex; justify-content:center; align-items:center; cursor: pointer; z-index: 200; }
+        .voice-btn.off { border-color: #555; color: #555; }
+    </style>
+</head>
+<body>
+
+    <div id="start-overlay">
+        <i class="fas fa-fingerprint" style="font-size: 4rem; color: var(--neon-blue); margin-bottom: 20px;"></i>
+        <h1 style="font-family: 'Exo 2'; font-size: 2.5rem;">BIOMETRIC SCAN REQUIRED</h1>
+        <p style="color: #aaa; margin-bottom: 30px;">Click below to initialize Cortex Audio Systems.</p>
+        <button class="start-btn" onclick="initSystem()">INITIALIZE</button>
+    </div>
+
+    <nav>
+        <div class="logo">NEURAL <span>NEXUS</span></div>
+        <div class="stats">
+            <div class="xp-pill">XP: <span id="xp-display">0</span></div>
+            <a href="exam.html" style="color:white; text-decoration:none; opacity:0.7; font-size:0.9rem;">EXIT</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="brain-container">
+                <div class="brain-ring"></div>
+                <div class="brain-ring"></div>
+                <i class="fas fa-brain brain-icon" id="brain-icon"></i>
+            </div>
+            <div style="text-align:center; color:var(--neon-pink); font-weight:bold; margin-bottom:10px;">CORTEX AI</div>
+            <div class="log-feed" id="log-feed"></div>
+        </div>
+
+        <div class="stage">
+            
+            <div id="slide-intro" class="card" style="justify-content:center; text-align:center;">
+                <i class="fas fa-project-diagram" style="font-size: 6rem; color: var(--neon-purple); margin-bottom: 20px;"></i>
+                <h1 style="font-size: 3.5rem; margin-bottom: 10px;">MACHINE <span style="color:var(--neon-pink)">LEARNING</span></h1>
+                <p style="color:#bbb; margin-bottom: 40px; font-size: 1.2rem;">Role: ML Engineer <br>Stack: Scikit-learn, TensorFlow, Neural Networks.</p>
+                <div style="display:flex; justify-content:center; gap:20px;">
+                    <button class="btn-sec" onclick="openDataCore()">ACCESS DATA CORE</button>
+                    <button class="btn-main" onclick="startExam()">INITIATE TRAINING</button>
+                </div>
+            </div>
+
+            <div id="slide-theory" class="card hidden">
+                <div style="display:flex; justify-content:space-between; border-bottom:1px solid var(--neon-purple); padding-bottom:15px; margin-bottom:20px;">
+                    <h2 style="color:var(--neon-blue);">DATA CORE ARCHIVES</h2>
+                    <button onclick="closeDataCore()" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+                </div>
+                <div style="overflow-y:auto; padding-right:10px;">
+                    <div class="archive-grid">
+                        <div class="archive-box">
+                            <div class="archive-title">MACHINE LEARNING</div>
+                            <div class="archive-desc">Teaching computers to learn patterns from data without explicit programming.</div>
+                        </div>
+                        <div class="archive-box">
+                            <div class="archive-title">SCIKIT-LEARN</div>
+                            <div class="archive-desc">The standard library for classical algorithms like Regression, SVM, and Clustering.</div>
+                        </div>
+                        <div class="archive-box">
+                            <div class="archive-title">TENSORFLOW</div>
+                            <div class="archive-desc">Deep Learning library for building multi-layered Neural Networks.</div>
+                        </div>
+                    </div>
+                    <div style="text-align:center; margin-top:30px;"><button class="btn-main" onclick="startExam()">START EXAM</button></div>
+                </div>
+            </div>
+
+            <div id="slide-2" class="card hidden">
+                <h2 style="color:var(--neon-pink);">STEP 1: DATA PREPARATION</h2>
+                <p style="color:#ccc; margin-bottom:30px;">Objective: Split the dataset into Training (80%) and Testing (20%).</p>
+                <div class="data-pool" id="data-visual"></div>
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'split')">A) split(data, 0.5)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'split')">B) train_test_split(X, y, test_size=0.2)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'split')">C) model.separate(80, 20)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'split')">D) sklearn.divide(X, y)</button>
+                </div>
+            </div>
+
+            <div id="slide-3" class="card hidden">
+                <h2 style="color:var(--neon-purple);">STEP 2: ARCHITECTURE</h2>
+                <p style="color:#ccc; margin-bottom:30px;">Objective: Add a fully connected (Dense) layer to the model.</p>
+                <div class="neural-net">
+                    <div class="layer"><div class="neuron active"></div><div class="neuron active"></div></div>
+                    <div style="color:#555">---></div>
+                    <div class="layer" id="hidden-layer"><div class="neuron"></div><div class="neuron"></div><div class="neuron"></div></div>
+                    <div style="color:#555">---></div>
+                    <div class="layer"><div class="neuron active"></div></div>
+                </div>
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'layer')">A) model.append(Neuron(4))</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'layer')">B) model.add(Dense(4, activation='relu'))</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'layer')">C) model.connect(4)</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'layer')">D) model.layer(4)</button>
+                </div>
+            </div>
+
+            <div id="slide-4" class="card hidden">
+                <h2 style="color:var(--neon-blue);">STEP 3: OPTIMIZATION</h2>
+                <p style="color:#ccc; margin-bottom:30px;">Objective: Minimize loss. Identify the algorithm.</p>
+                <div class="descent-graph"><div class="ball" id="gradient-ball"></div></div>
+                <div class="options">
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'gradient')">A) Random Search</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, true, 'gradient')">B) Gradient Descent</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'gradient')">C) Genetic Eval</button>
+                    <button class="btn-opt" onclick="checkAnswer(this, false, 'gradient')">D) Decision Tree</button>
+                </div>
+            </div>
+
+            <div id="slide-5" class="card hidden" style="align-items:center; justify-content:center; text-align:center;">
+                <i class="fas fa-brain" style="font-size:5rem; color:var(--neon-pink); margin-bottom:20px;"></i>
+                <h1 style="font-size:3rem; margin-bottom:10px;">MODEL <span style="color:var(--neon-purple)">CONVERGED</span></h1>
+                <p style="color:#aaa; margin-bottom:30px;">Training complete. Accuracy: 98.7%.</p>
+                <div style="display:flex; gap:20px;">
+                    <button class="btn-sec" onclick="window.location.reload()">RETRAIN</button>
+                    <button class="btn-main" onclick="window.location.href='exam.html'">DASHBOARD</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="voice-btn" id="voice-toggle" onclick="toggleVoice()"><i class="fas fa-volume-up"></i></div>
+
+    <script>
+        let currentSlide = 1;
+        let voiceEnabled = true;
+        let xp = 0;
+        const synth = window.speechSynthesis;
+        let voices = [];
+
+        // --- 1. SYSTEM INIT (Fix for Audio Autoplay) ---
+        function initSystem() {
+            document.getElementById('start-overlay').style.display = 'none';
+            // Force load voices
+            voices = synth.getVoices();
+            // Create data dots for slide 2
+            const pool = document.getElementById('data-visual');
+            for(let i=0; i<30; i++) {
+                let dot = document.createElement('div');
+                dot.className = 'data-dot';
+                pool.appendChild(dot);
+            }
+            log("Cortex System Initialized.");
+            speak("Welcome to Neural Nexus. I am Cortex, your AI guide.");
+        }
+
+        // --- VOICE ENGINE ---
+        function speak(text) {
+            if(!voiceEnabled) return;
+            synth.cancel();
+            const u = new SpeechSynthesisUtterance(text);
+            u.rate = 1.0; 
+            u.pitch = 0.9; 
+            
+            // Try to select a better voice
+            if(voices.length === 0) voices = synth.getVoices();
+            const preferred = voices.find(v => v.name.includes('Google US English') || v.name.includes('Samantha'));
+            if(preferred) u.voice = preferred;
+
+            synth.speak(u);
+            log(text);
+            
+            const brain = document.getElementById('brain-icon');
+            brain.style.color = "var(--neon-pink)";
+            u.onend = () => brain.style.color = "white";
+        }
+
+        function log(text) {
+            const feed = document.getElementById('log-feed');
+            const div = document.createElement('div');
+            div.className = 'log-entry';
+            div.innerHTML = "<span>CORTEX:</span> " + text;
+            feed.appendChild(div);
+            feed.scrollTop = feed.scrollHeight;
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('voice-toggle');
+            if(voiceEnabled) {
+                btn.classList.remove('off');
+                speak("Voice systems online.");
+            } else {
+                btn.classList.add('off');
+                synth.cancel();
+            }
+        }
+
+        // --- GAME LOGIC ---
+        function openDataCore() {
+            document.getElementById('slide-intro').classList.add('hidden');
+            document.getElementById('slide-theory').classList.remove('hidden');
+            speak("Accessing Data Core. Review these machine learning protocols.");
+        }
+
+        function closeDataCore() {
+            document.getElementById('slide-theory').classList.add('hidden');
+            document.getElementById('slide-intro').classList.remove('hidden');
+        }
+
+        function startExam() {
+            document.getElementById('slide-intro').classList.add('hidden');
+            document.getElementById('slide-theory').classList.add('hidden');
+            document.getElementById('slide-2').classList.remove('hidden');
+            currentSlide = 2;
+            speak("Phase 1: Preprocessing. We need to split the data. Select the correct Scikit-learn function.");
+        }
+
+        function checkAnswer(btn, isCorrect, type) {
+            // Disable options
+            const parent = btn.parentElement;
+            Array.from(parent.children).forEach(c => {
+                c.style.pointerEvents = 'none';
+                c.style.opacity = '0.5';
+            });
+            btn.style.opacity = '1';
+
+            if(isCorrect) {
+                btn.classList.add('correct'); // No background image needed for colors
+                btn.style.borderColor = "var(--neon-pink)";
+                btn.style.color = "white";
+                xp += 150;
+                document.getElementById('xp-display').innerText = xp;
+                speak("Affirmative. Parameters accepted.");
+
+                // Visual FX
+                if(type === 'split') {
+                    document.querySelectorAll('.data-dot').forEach((d, i) => {
+                        if(i < 24) d.classList.add('train');
+                        else d.classList.add('test');
+                    });
+                }
+                if(type === 'layer') {
+                    document.querySelectorAll('#hidden-layer .neuron').forEach((n, i) => {
+                        setTimeout(() => n.classList.add('active'), i*100);
+                    });
+                }
+                if(type === 'gradient') {
+                    const ball = document.getElementById('gradient-ball');
+                    ball.style.top = "120px"; ball.style.left = "140px";
+                }
+
+                setTimeout(() => {
+                    document.getElementById('slide-'+currentSlide).classList.add('hidden');
+                    currentSlide++;
+                    document.getElementById('slide-'+currentSlide).classList.remove('hidden');
+
+                    if(currentSlide === 3) speak("Phase 2: Architecture. Add a dense layer to the neural network.");
+                    if(currentSlide === 4) speak("Phase 3: Optimization. Select the algorithm to minimize loss.");
+                    if(currentSlide === 5) speak("Model converged. Excellent work.");
+                }, 2000);
+
+            } else {
+                btn.classList.add('wrong');
+                btn.style.borderColor = "red";
+                btn.style.color = "red";
+                speak("Incorrect. Loss function increasing. Try again.");
+                setTimeout(() => {
+                    Array.from(parent.children).forEach(c => {
+                        c.style.pointerEvents = 'auto';
+                        c.style.opacity = '1';
+                        c.classList.remove('wrong');
+                        c.style.borderColor = "#555";
+                        c.style.color = "#aaa";
+                    });
+                }, 2000);
+            }
+        }
+    </script>
+</body>
+</html>

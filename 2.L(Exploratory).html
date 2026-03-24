@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Loop Explorer // Sandbox</title>
+    <style>
+        /* --- NEON SANDBOX PALETTE --- */
+        :root {
+            --bg: #050508;
+            --panel: #0b0b0e;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-green: #00ff99;
+            --neon-purple: #bd00ff;
+            --neon-yellow: #ffea00;
+            --text-main: #d1d5db;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text-main);
+            font-family: 'Consolas', 'Monaco', monospace;
+            padding: 30px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        h1 {
+            color: var(--neon-purple);
+            text-shadow: 0 0 15px var(--neon-purple);
+            text-transform: uppercase;
+            letter-spacing: 5px;
+            margin-bottom: 50px;
+            border-bottom: 2px solid var(--neon-purple);
+            padding-bottom: 10px;
+        }
+
+        .module {
+            background: var(--panel);
+            border: 1px solid #333;
+            border-radius: 10px;
+            width: 100%;
+            max-width: 850px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+            position: relative;
+        }
+
+        .module h2 {
+            margin-top: 0;
+            color: var(--neon-blue);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            background: #222;
+            padding: 5px 10px;
+            border-radius: 4px;
+            color: #fff;
+            border: 1px solid #555;
+        }
+
+        /* --- CONTROLS UI --- */
+        .controls-row {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 20px;
+            background: #111;
+            padding: 15px;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        label {
+            display: block;
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 5px;
+        }
+
+        input[type="range"] {
+            width: 150px;
+            accent-color: var(--neon-blue);
+        }
+
+        input[type="number"] {
+            background: #222;
+            border: 1px solid #444;
+            color: #fff;
+            padding: 5px;
+            border-radius: 4px;
+            width: 60px;
+        }
+
+        /* --- VISUAL OUTPUTS --- */
+        .output-console {
+            background: #000;
+            border: 1px solid var(--neon-green);
+            padding: 20px;
+            min-height: 60px;
+            font-size: 1.1rem;
+            color: var(--neon-green);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .box-item {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--neon-blue);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #fff;
+            border-radius: 4px;
+            box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+            transition: 0.2s;
+        }
+
+        /* --- MODULE 2: BREAK/CONTINUE --- */
+        .timeline {
+            display: flex;
+            gap: 5px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .time-slot {
+            width: 50px;
+            height: 80px;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 0;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .time-slot:hover { background: #222; }
+        
+        .time-slot.break { border-color: var(--neon-pink); background: rgba(255,0,85,0.1); }
+        .time-slot.continue { border-color: var(--neon-yellow); background: rgba(255,234,0,0.1); }
+
+        .slot-num { font-size: 1.2rem; font-weight: bold; }
+        .slot-action { font-size: 0.7rem; color: #666; text-transform: uppercase; }
+
+        .time-slot.break .slot-action { color: var(--neon-pink); }
+        .time-slot.continue .slot-action { color: var(--neon-yellow); }
+
+        /* --- MODULE 3: PATTERN SYNTH --- */
+        .grid-output {
+            display: grid;
+            gap: 2px;
+            background: #222;
+            padding: 10px;
+            width: fit-content;
+            margin: 0 auto;
+            border: 1px solid #444;
+        }
+        
+        .grid-cell {
+            width: 20px;
+            height: 20px;
+            background: var(--neon-purple);
+            opacity: 0.2;
+        }
+        .grid-cell.active { opacity: 1; box-shadow: 0 0 5px var(--neon-purple); }
+
+    </style>
+</head>
+<body>
+
+    <h1>Loop Explorer // Sandbox</h1>
+
+    <div class="module">
+        <h2>
+            1. The Range Rover
+            <span class="badge">for i in range(...)</span>
+        </h2>
+        <p style="color:#aaa; font-size:0.9rem;">Adjust the sliders to see how Python generates number sequences. Watch how <strong>Stop</strong> is never included!</p>
+
+        <div class="controls-row">
+            <div>
+                <label>START (From)</label>
+                <input type="range" id="rng-start" min="0" max="10" value="0" oninput="updateRange()">
+                <span id="val-start" style="color:var(--neon-blue)">0</span>
+            </div>
+            <div>
+                <label>STOP (Up To)</label>
+                <input type="range" id="rng-stop" min="1" max="20" value="10" oninput="updateRange()">
+                <span id="val-stop" style="color:var(--neon-pink)">10</span>
+            </div>
+            <div>
+                <label>STEP (Jump By)</label>
+                <input type="range" id="rng-step" min="1" max="5" value="1" oninput="updateRange()">
+                <span id="val-step" style="color:var(--neon-yellow)">1</span>
+            </div>
+        </div>
+
+        <div style="font-family: monospace; margin-bottom: 10px; color: #fff;">
+            Code: <span style="color:var(--neon-green)">for</span> i <span style="color:var(--neon-green)">in</span> range(<span id="code-start">0</span>, <span id="code-stop">10</span>, <span id="code-step">1</span>):
+        </div>
+
+        <div class="output-console" id="range-output">
+            </div>
+    </div>
+
+
+    <div class="module">
+        <h2>
+            2. The Flow Interceptor
+            <span class="badge">break / continue</span>
+        </h2>
+        <p style="color:#aaa; font-size:0.9rem;">
+            Click on a number block below to set a Trap. <br>
+            <span style="color:var(--neon-pink)">RED (Break)</span> = Kills the loop immediately.<br>
+            <span style="color:var(--neon-yellow)">YELLOW (Continue)</span> = Skips just this number.
+        </p>
+
+        <div class="timeline" id="timeline">
+            </div>
+
+        <div style="text-align: right; margin-bottom:10px;">
+            <button onclick="resetTimeline()" style="background:transparent; color:#666; border:1px solid #444; cursor:pointer;">Reset Traps</button>
+        </div>
+
+        <div class="output-console" style="border-color: #fff; color: #fff;" id="flow-output">
+            > Output will appear here...
+        </div>
+    </div>
+
+
+    <div class="module">
+        <h2>
+            3. The Pattern Synth
+            <span class="badge">Nested Loops</span>
+        </h2>
+        <p style="color:#aaa; font-size:0.9rem;">
+            Control the <strong>Outer Loop</strong> (Rows) and <strong>Inner Loop</strong> (Cols). This is how you build grids for games.
+        </p>
+
+        <div class="controls-row">
+            <div>
+                <label>OUTER LOOP (Rows)</label>
+                <input type="range" id="synth-rows" min="1" max="10" value="5" oninput="updateSynth()">
+                <span id="val-rows">5</span>
+            </div>
+            <div>
+                <label>INNER LOOP (Columns)</label>
+                <input type="range" id="synth-cols" min="1" max="10" value="5" oninput="updateSynth()">
+                <span id="val-cols">5</span>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 20px;">
+            <div style="font-family: monospace; color: #888;">
+                for row in range(<span id="code-rows" style="color:var(--neon-blue)">5</span>):<br>
+                &nbsp; for col in range(<span id="code-cols" style="color:var(--neon-purple)">5</span>):<br>
+                &nbsp; &nbsp; print("■")
+            </div>
+            
+            <div id="synth-grid" class="grid-output">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. RANGE ROVER LOGIC ---
+        function updateRange() {
+            const start = parseInt(document.getElementById('rng-start').value);
+            const stop = parseInt(document.getElementById('rng-stop').value);
+            const step = parseInt(document.getElementById('rng-step').value);
+
+            // Update Text Labels
+            document.getElementById('val-start').innerText = start;
+            document.getElementById('val-stop').innerText = stop;
+            document.getElementById('val-step').innerText = step;
+
+            document.getElementById('code-start').innerText = start;
+            document.getElementById('code-stop').innerText = stop;
+            document.getElementById('code-step').innerText = step;
+
+            // Generate Output
+            const container = document.getElementById('range-output');
+            container.innerHTML = '';
+
+            // Python Logic: Stop if start >= stop (if step is positive)
+            if (start < stop) {
+                for (let i = start; i < stop; i += step) {
+                    let box = document.createElement('div');
+                    box.className = 'box-item';
+                    box.innerText = i;
+                    container.appendChild(box);
+                }
+            } else {
+                container.innerHTML = '<span style="color:#666">// Loop will not run (Start is >= Stop)</span>';
+            }
+        }
+
+        // --- 2. FLOW INTERCEPTOR LOGIC ---
+        const flowData = Array(10).fill(null); // null, 'break', 'continue'
+
+        function initTimeline() {
+            const container = document.getElementById('timeline');
+            container.innerHTML = '';
+            
+            for(let i=0; i<10; i++) {
+                let slot = document.createElement('div');
+                slot.className = 'time-slot';
+                if(flowData[i] === 'break') slot.classList.add('break');
+                if(flowData[i] === 'continue') slot.classList.add('continue');
+
+                let label = flowData[i] ? flowData[i] : 'pass';
+
+                slot.innerHTML = `
+                    <span class="slot-num">${i}</span>
+                    <span class="slot-action">${label}</span>
+                `;
+
+                // Click Handler: Cycle through states (Null -> Continue -> Break -> Null)
+                slot.onclick = () => {
+                    if(flowData[i] === null) flowData[i] = 'continue';
+                    else if(flowData[i] === 'continue') flowData[i] = 'break';
+                    else flowData[i] = null;
+                    initTimeline(); // Re-render
+                    runFlowSimulation(); // Run logic
+                };
+
+                container.appendChild(slot);
+            }
+            runFlowSimulation();
+        }
+
+        function runFlowSimulation() {
+            const output = document.getElementById('flow-output');
+            output.innerHTML = '';
+            
+            for(let i=0; i<10; i++) {
+                // Check Trap
+                if(flowData[i] === 'break') {
+                    output.innerHTML += `<span style="color:var(--neon-pink)">[BREAK triggered at ${i}. Loop Dead.]</span>`;
+                    break; // Stop JS loop
+                }
+                
+                if(flowData[i] === 'continue') {
+                    output.innerHTML += `<span style="color:var(--neon-yellow; opacity:0.5)">[Skip ${i}]</span> `;
+                    continue; // Skip JS loop iteration
+                }
+
+                // Normal Print
+                output.innerHTML += `<span style="border:1px solid #333; padding:2px 6px; margin:2px;">${i}</span> `;
+            }
+        }
+
+        function resetTimeline() {
+            for(let i=0; i<10; i++) flowData[i] = null;
+            initTimeline();
+        }
+
+        // --- 3. PATTERN SYNTH LOGIC ---
+        function updateSynth() {
+            const rows = document.getElementById('synth-rows').value;
+            const cols = document.getElementById('synth-cols').value;
+
+            document.getElementById('val-rows').innerText = rows;
+            document.getElementById('val-cols').innerText = cols;
+            document.getElementById('code-rows').innerText = rows;
+            document.getElementById('code-cols').innerText = cols;
+
+            const grid = document.getElementById('synth-grid');
+            
+            // Set Grid CSS columns dynamically
+            grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+            grid.innerHTML = '';
+
+            // Generate Cells
+            let total = rows * cols;
+            for(let i=0; i<total; i++) {
+                let cell = document.createElement('div');
+                cell.className = 'grid-cell active';
+                grid.appendChild(cell);
+            }
+        }
+
+        // --- INIT ALL ---
+        updateRange();
+        initTimeline();
+        updateSynth();
+
+    </script>
+</body>
+</html>

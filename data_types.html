@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MINDCRAFT - Data Types Level</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-dark: #050510;
+            --card-bg: #0f0f1a;
+            --text-main: #ffffff;
+            --text-muted: #a0a0b0;
+            --neon-purple: #bd00ff;
+            --neon-cyan: #00f0ff;
+            --neon-green: #00ff9d;
+            --danger: #ff0055;
+            --border-color: #2a2a35;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- HEADER --- */
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 2rem;
+            background-color: var(--bg-dark);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+            color: var(--neon-cyan);
+            text-transform: uppercase;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .avatar {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid var(--neon-purple);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neon-purple);
+            background: rgba(189, 0, 255, 0.1);
+        }
+
+        .exit-btn {
+            color: var(--text-muted);
+            font-size: 1.3rem;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .exit-btn:hover {
+            color: var(--danger);
+            text-shadow: 0 0 10px var(--danger);
+            transform: translateX(3px);
+        }
+
+        /* --- STATS BAR --- */
+        .stats-bar {
+            display: flex;
+            justify-content: space-around;
+            padding: 1rem 2rem;
+            background-color: #080812;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .stat-item { display: flex; flex-direction: column; }
+        .stat-label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 5px; }
+        .stat-label i { margin-right: 5px; color: var(--neon-purple); }
+        .stat-value { font-weight: bold; font-size: 1.1rem; }
+        .xp-container { width: 150px; height: 6px; background: #333; border-radius: 3px; margin-top: 5px; }
+        .xp-fill { width: 20%; height: 100%; background: var(--neon-purple); border-radius: 3px; box-shadow: 0 0 8px var(--neon-purple); transition: width 0.5s ease;}
+
+        /* --- MAIN STAGE --- */
+        .main-stage {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        .level-card {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .progress-dots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 2rem;
+        }
+        .dot {
+            width: 40px;
+            height: 4px;
+            background: #333;
+            border-radius: 2px;
+        }
+        .dot.active { background: var(--neon-cyan); box-shadow: 0 0 5px var(--neon-cyan); }
+
+        .slide { display: none; animation: fadeIn 0.4s ease; }
+        .slide.active { display: block; }
+
+        h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #a0a0b0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        h2 span { color: var(--neon-purple); -webkit-text-fill-color: var(--neon-purple); }
+
+        p { color: var(--text-muted); margin-bottom: 1.5rem; font-size: 1.1rem; line-height: 1.6; }
+
+        /* Type Cards for Slide 1 */
+        .types-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 2rem;
+        }
+        .type-item {
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.02);
+        }
+        .type-item strong { color: var(--neon-cyan); font-family: monospace; font-size: 1.2rem; display: block; margin-bottom: 5px;}
+        
+        /* Interaction Area for Slide 2 (The Sorter) */
+        .sorter-area {
+            text-align: center;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #050510;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+        }
+        
+        .mystery-value {
+            font-family: 'Courier New', monospace;
+            font-size: 2.5rem;
+            color: var(--neon-green);
+            margin-bottom: 2rem;
+            text-shadow: 0 0 10px rgba(0, 255, 157, 0.3);
+        }
+
+        .sort-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        
+        .sort-btn {
+            background: #222;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sort-btn:hover { border-color: var(--neon-cyan); background: rgba(0,240,255,0.1); }
+        .sort-btn.correct { background: var(--neon-green); color: black; border-color: var(--neon-green); }
+        .sort-btn.wrong { background: var(--danger); border-color: var(--danger); }
+
+        /* Common Button Styles */
+        .btn-group { display: flex; justify-content: flex-end; margin-top: 2rem; }
+        .btn {
+            background: transparent;
+            border: 1px solid var(--border-color);
+            color: white;
+            padding: 10px 25px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .btn-primary {
+            background: var(--neon-purple);
+            border-color: var(--neon-purple);
+            box-shadow: 0 0 15px rgba(189, 0, 255, 0.3);
+        }
+        .btn-primary:hover { box-shadow: 0 0 25px rgba(189, 0, 255, 0.6); transform: translateY(-2px); }
+
+        /* Quiz Styles */
+        .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .option-card {
+            background: rgba(255,255,255,0.05);
+            border: 1px solid var(--border-color);
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .option-card:hover { border-color: var(--neon-cyan); background: rgba(0, 240, 255, 0.05); }
+        .option-card.correct { border-color: var(--neon-green); background: rgba(0, 255, 157, 0.1); color: var(--neon-green); }
+        .option-card.wrong { border-color: var(--danger); color: var(--danger); }
+
+        .chat-btn {
+            position: fixed; bottom: 30px; right: 30px;
+            width: 50px; height: 50px; border-radius: 50%;
+            background: var(--neon-purple); display: flex;
+            justify-content: center; align-items: center;
+            box-shadow: 0 0 20px rgba(189, 0, 255, 0.5);
+            cursor: pointer; color: white; font-size: 1.2rem;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">MINDCRAFT</div>
+        <div class="nav-right">
+            <div class="user-profile">
+                <span>sarayu</span>
+                <div class="avatar"><i class="fas fa-user"></i></div>
+            </div>
+            <a href="clickable.html" class="exit-btn" title="Exit Level"><i class="fas fa-sign-out-alt"></i></a>
+        </div>
+    </nav>
+
+    <div class="stats-bar">
+        <div class="stat-item">
+            <div class="stat-label">🏆 Level</div>
+            <div class="stat-value">1</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">⚡ XP</div>
+            <div class="stat-value">75/100</div>
+            <div class="xp-container"><div class="xp-fill" id="xp-bar" style="width: 25%"></div></div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">📈 Streak</div>
+            <div class="stat-value" style="color: var(--neon-green)">1 day</div>
+        </div>
+    </div>
+
+    <div class="main-stage">
+        <div class="level-card">
+            <div class="progress-dots">
+                <div class="dot active"></div>
+                <div class="dot"></div>
+                <div class="dot"></div>
+            </div>
+
+            <div class="slide active" id="slide1">
+                <h2>The 4 Basic <span>Data Types</span></h2>
+                <p>In Python, every piece of data has a specific type. Here are the big four:</p>
+                
+                <div class="types-grid">
+                    <div class="type-item">
+                        <strong>int</strong>
+                        <span>Whole numbers (e.g., 5, 100, -2)</span>
+                    </div>
+                    <div class="type-item">
+                        <strong>float</strong>
+                        <span>Decimals (e.g., 3.14, 2.5)</span>
+                    </div>
+                    <div class="type-item">
+                        <strong>str</strong>
+                        <span>Text in quotes (e.g., "Hello")</span>
+                    </div>
+                    <div class="type-item">
+                        <strong>bool</strong>
+                        <span>True or False logic</span>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn btn-primary" onclick="nextSlide(2)">Practice &rarr;</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide2">
+                <h2>Identify the <span>Type</span></h2>
+                <p>Look at the value below. Is it a String (Text) or a Float (Decimal)?</p>
+
+                <div class="sorter-area">
+                    <div class="mystery-value">"Level Up"</div>
+                    <p id="sorter-feedback" style="height: 20px; font-size: 0.9rem; color: var(--text-muted); margin-bottom: 20px;">...</p>
+                    
+                    <div class="sort-buttons">
+                        <button class="sort-btn" onclick="checkSort(this, 'int')">int (Number)</button>
+                        <button class="sort-btn" onclick="checkSort(this, 'str')">str (String)</button>
+                        <button class="sort-btn" onclick="checkSort(this, 'float')">float (Decimal)</button>
+                    </div>
+                </div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextSlide(1)" style="margin-right: 10px;">Back</button>
+                    <button class="btn btn-primary" id="btn-s2" disabled onclick="nextSlide(3)">Continue &rarr;</button>
+                </div>
+            </div>
+
+            <div class="slide" id="slide3">
+                <h2>Quick <span>Quiz</span></h2>
+                <p>Which of the following is an <code>int</code> (Integer)?</p>
+
+                <div class="options-grid">
+                    <div class="option-card" onclick="checkAnswer(this, false)">"25"</div>
+                    <div class="option-card" onclick="checkAnswer(this, false)">25.5</div>
+                    <div class="option-card" onclick="checkAnswer(this, true)">25</div>
+                    <div class="option-card" onclick="checkAnswer(this, false)">True</div>
+                </div>
+
+                <div id="feedback" style="margin-top: 20px; text-align: center; height: 30px; font-weight: bold;"></div>
+
+                <div class="btn-group">
+                    <button class="btn" onclick="nextSlide(2)" style="margin-right: 10px;">Back</button>
+                    <button class="btn btn-primary" id="finish-btn" style="display:none" onclick="finishLevel()">Finish Level</button>
+                </div>
+            </div>
+            
+            <div class="slide" id="slide4" style="text-align: center; padding: 2rem;">
+                <h1 style="font-size: 4rem; margin-bottom: 1rem;">🎉</h1>
+                <h2>Level Complete!</h2>
+                <p>You now understand Python Data Types.</p>
+                <p style="color: var(--neon-cyan)">+50 XP Gained</p>
+                <button class="btn btn-primary" onclick="window.location.href='clickable.html'">Back to Path</button>
+            </div>
+
+        </div>
+    </div>
+
+    <div class="chat-btn"><i class="fas fa-comment"></i></div>
+
+    <script>
+        // --- Navigation ---
+        function nextSlide(slideNum) {
+            document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+            document.getElementById('slide' + slideNum).classList.add('active');
+            
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach(d => d.classList.remove('active'));
+            if(dots[slideNum-1]) dots[slideNum-1].classList.add('active');
+        }
+
+        // --- Slide 2 Logic (The Sorter) ---
+        function checkSort(btn, type) {
+            // The mystery value is "Level Up" which is a string
+            const correctType = 'str';
+            const feedback = document.getElementById('sorter-feedback');
+            const continueBtn = document.getElementById('btn-s2');
+
+            // Reset buttons
+            document.querySelectorAll('.sort-btn').forEach(b => {
+                b.classList.remove('correct', 'wrong');
+            });
+
+            if(type === correctType) {
+                btn.classList.add('correct');
+                feedback.textContent = "Correct! The quotes \" \" make it a String.";
+                feedback.style.color = "var(--neon-green)";
+                continueBtn.disabled = false;
+                continueBtn.style.opacity = "1";
+            } else {
+                btn.classList.add('wrong');
+                feedback.textContent = "Not quite. Look for the quotes!";
+                feedback.style.color = "var(--danger)";
+            }
+        }
+
+        // --- Slide 3 Logic (Quiz) ---
+        function checkAnswer(element, isCorrect) {
+            document.querySelectorAll('.option-card').forEach(c => c.classList.remove('correct', 'wrong'));
+            const feedback = document.getElementById('feedback');
+
+            if (isCorrect) {
+                element.classList.add('correct');
+                feedback.textContent = "Correct! 25 is a whole number.";
+                feedback.style.color = "var(--neon-green)";
+                document.getElementById('finish-btn').style.display = 'block';
+                // XP Bar Animation
+                document.getElementById('xp-bar').style.width = "85%";
+            } else {
+                element.classList.add('wrong');
+                feedback.textContent = "Try again! Look for the whole number without quotes.";
+                feedback.style.color = "var(--danger)";
+            }
+        }
+
+        function finishLevel() {
+            nextSlide(4);
+            document.querySelector('.progress-dots').style.opacity = '0';
+        }
+    </script>
+</body>
+</html>

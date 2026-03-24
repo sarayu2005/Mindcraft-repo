@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Neon Circuit: Visual Logic Flows</title>
+    <style>
+        /* --- CYBER CIRCUIT PALETTE --- */
+        :root {
+            --bg: #030305;
+            --panel: #0e0e12;
+            --neon-cyan: #00f3ff;
+            --neon-pink: #ff0099;
+            --neon-green: #00ff66;
+            --neon-yellow: #ffee00;
+            --track-off: #222;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+        }
+
+        h1 {
+            color: var(--neon-cyan);
+            text-shadow: 0 0 15px var(--neon-cyan);
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            margin-bottom: 50px;
+            border: 1px solid var(--neon-cyan);
+            padding: 10px 30px;
+            border-radius: 30px;
+        }
+
+        /* --- CARDS --- */
+        .circuit-board {
+            background: var(--panel);
+            border-radius: 20px;
+            border: 1px solid #333;
+            box-shadow: 0 0 40px rgba(0,0,0,0.8);
+            width: 100%;
+            max-width: 800px;
+            margin-bottom: 50px;
+            padding: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .circuit-board::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 5px; height: 100%;
+            background: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        h2 { margin-top: 0; color: var(--neon-pink); }
+        p { color: #aaa; margin-bottom: 20px; }
+
+        /* --- VISUALIZATION AREA --- */
+        .vis-area {
+            background: #000;
+            border-radius: 10px;
+            height: 200px;
+            position: relative;
+            margin-bottom: 20px;
+            border: 1px dashed #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* --- ANIMATION OBJECTS --- */
+        .runner-dot {
+            width: 20px;
+            height: 20px;
+            background: #fff;
+            border-radius: 50%;
+            position: absolute;
+            z-index: 10;
+            box-shadow: 0 0 10px #fff;
+            transition: all 0.3s linear;
+        }
+
+        /* --- FOR LOOP (TRACK) --- */
+        .track-svg {
+            width: 300px;
+            height: 150px;
+            fill: none;
+            stroke: var(--track-off);
+            stroke-width: 4;
+            stroke-linecap: round;
+        }
+        
+        .track-active {
+            stroke: var(--neon-green);
+            stroke-dasharray: 1000;
+            stroke-dashoffset: 1000;
+            animation: drawLine 2s linear forwards;
+            filter: drop-shadow(0 0 5px var(--neon-green));
+        }
+
+        /* --- WHILE LOOP (GATE) --- */
+        .gate-container {
+            display: flex;
+            align-items: center;
+            gap: 50px;
+        }
+        .gate {
+            width: 10px;
+            height: 100px;
+            background: var(--neon-pink);
+            box-shadow: 0 0 15px var(--neon-pink);
+            transition: 0.5s;
+        }
+        .gate.open {
+            background: #333;
+            box-shadow: none;
+            transform: scaleY(0);
+        }
+
+        /* --- NESTED LOOP (GRID) --- */
+        .grid-map {
+            display: grid;
+            grid-template-columns: repeat(3, 50px);
+            grid-template-rows: repeat(3, 50px);
+            gap: 5px;
+        }
+        .grid-cell {
+            background: #111;
+            border: 1px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #555;
+            font-size: 0.8rem;
+        }
+        .grid-cell.active {
+            background: var(--neon-cyan);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-cyan);
+            transform: scale(1.1);
+        }
+
+        /* --- CONTROLS --- */
+        .control-panel {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #1a1a1e;
+            padding: 15px;
+            border-radius: 8px;
+        }
+
+        .code-display {
+            font-family: 'Courier New', monospace;
+            color: var(--neon-yellow);
+        }
+
+        button {
+            background: transparent;
+            border: 1px solid #fff;
+            color: #fff;
+            padding: 8px 20px;
+            cursor: pointer;
+            border-radius: 4px;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        button:hover {
+            background: #fff;
+            color: #000;
+            box-shadow: 0 0 15px #fff;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Neon Circuit // Visualizer</h1>
+
+    <div class="circuit-board">
+        <h2>1. The Loop Track (For Loop)</h2>
+        <p>A <code>for</code> loop follows a set path. Visualizing <code>range(3)</code> means running the track exactly 3 times.</p>
+        
+        <div class="vis-area">
+            <svg class="track-svg" viewBox="0 0 300 150">
+                <path id="lapTrack" d="M 50,75 a 50,50 0 1,1 200,0 a 50,50 0 1,1 -200,0" />
+            </svg>
+            <div id="for-runner" class="runner-dot" style="opacity: 0;"></div>
+            <div style="position: absolute; top: 40%; left: 45%; text-align: center;">
+                <div style="font-size: 0.8rem; color:#666;">LAP</div>
+                <div id="lap-counter" style="font-size: 2rem; color: var(--neon-green);">0</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="code-display">for i in range(3):</div>
+            <button onclick="runForLoop()">Run Circuit</button>
+        </div>
+    </div>
+
+    <div class="circuit-board" style="border-left-color: var(--neon-pink);">
+        <style>.circuit-board:nth-child(2)::before{background:var(--neon-pink);}</style>
+        <h2>2. The Checkpoint (While Loop)</h2>
+        <p>A <code>while</code> loop bounces against a "Logic Gate". It cannot proceed until the condition changes.</p>
+
+        <div class="vis-area">
+            <div class="gate-container">
+                <div id="while-runner" class="runner-dot" style="position: relative; left: 0;"></div>
+                <div id="logic-gate" class="gate"></div>
+                <div style="color: #444; font-size: 0.8rem; width: 50px;">EXIT &rarr;</div>
+            </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="code-display" id="while-code">while locked == True:</div>
+            <button id="unlock-btn" onclick="toggleGate()" style="border-color:var(--neon-pink); color:var(--neon-pink);">UNLOCK GATE</button>
+        </div>
+    </div>
+
+    <div class="circuit-board">
+        <style>.circuit-board:nth-child(3)::before{background:var(--neon-cyan);}</style>
+        <h2>3. The Grid Scanner (Nested Loops)</h2>
+        <p>This is how games render maps. The <strong>Outer Loop</strong> picks a Row, the <strong>Inner Loop</strong> scans every Column in that row.</p>
+
+        <div class="vis-area">
+            <div class="grid-map" id="grid">
+                </div>
+        </div>
+
+        <div class="control-panel">
+            <div class="code-display">
+                for row in rows:<br>
+                &nbsp; for col in cols:
+            </div>
+            <button onclick="runScanner()" style="border-color:var(--neon-cyan); color:var(--neon-cyan);">Start Scan</button>
+        </div>
+    </div>
+
+    <script>
+        // --- 1. FOR LOOP LOGIC ---
+        function runForLoop() {
+            const runner = document.getElementById('for-runner');
+            const counter = document.getElementById('lap-counter');
+            const trackPath = document.getElementById('lapTrack');
+            
+            // Reset
+            counter.innerText = "0";
+            runner.style.opacity = 1;
+            
+            let laps = 0;
+            const totalLaps = 3;
+
+            function animateLap() {
+                if(laps >= totalLaps) {
+                    runner.style.opacity = 0;
+                    return;
+                }
+
+                // Simple path animation using JS for the dot
+                let start = Date.now();
+                let duration = 1000; // 1 second per lap
+
+                let timer = setInterval(() => {
+                    let timePassed = Date.now() - start;
+                    let progress = timePassed / duration;
+
+                    if (progress > 1) {
+                        clearInterval(timer);
+                        laps++;
+                        counter.innerText = laps;
+                        animateLap(); // Next Lap
+                    } else {
+                        // Get point on SVG path
+                        let point = trackPath.getPointAtLength(progress * trackPath.getTotalLength());
+                        // Adjust for vis-area offset (centered logic)
+                        // SVG is 300x150. Center is 150, 75.
+                        // We map the dot to these coordinates relative to the container
+                        runner.style.left = (point.x + 190) + 'px'; // +offset to center in div
+                        runner.style.top = (point.y + 20) + 'px';
+                    }
+                }, 20);
+            }
+            animateLap();
+        }
+
+        // --- 2. WHILE LOOP LOGIC ---
+        let isLocked = true;
+        let bounceInterval;
+
+        function startBouncing() {
+            const runner = document.getElementById('while-runner');
+            let position = 0;
+            let direction = 1;
+            
+            clearInterval(bounceInterval);
+            bounceInterval = setInterval(() => {
+                const gate = document.getElementById('logic-gate');
+                
+                // Move logic
+                position += (5 * direction);
+                runner.style.transform = `translateX(${position}px)`;
+
+                // Hit the gate (at approx 100px relative)
+                if (position > 100 && isLocked) {
+                    direction = -1; // Bounce back
+                    runner.style.backgroundColor = 'var(--neon-pink)';
+                } 
+                // Hit start
+                else if (position < 0) {
+                    direction = 1; // Go forward
+                    runner.style.backgroundColor = '#fff';
+                }
+                // Pass through
+                else if (position > 250) {
+                    clearInterval(bounceInterval);
+                    runner.style.backgroundColor = 'var(--neon-green)';
+                }
+
+            }, 20);
+        }
+
+        function toggleGate() {
+            isLocked = !isLocked;
+            const gate = document.getElementById('logic-gate');
+            const btn = document.getElementById('unlock-btn');
+            const code = document.getElementById('while-code');
+
+            if(!isLocked) {
+                gate.classList.add('open');
+                btn.innerText = "GATE OPEN";
+                btn.style.opacity = 0.5;
+                code.innerText = "while locked == False: (Exit)";
+                code.style.color = "var(--neon-green)";
+            }
+        }
+        
+        // Start bouncing immediately
+        startBouncing();
+
+
+        // --- 3. NESTED LOOP LOGIC ---
+        // Generate Grid
+        const grid = document.getElementById('grid');
+        for(let r=0; r<3; r++) {
+            for(let c=0; c<3; c++) {
+                let cell = document.createElement('div');
+                cell.className = 'grid-cell';
+                cell.id = `cell-${r}-${c}`;
+                cell.innerText = `[${r},${c}]`;
+                grid.appendChild(cell);
+            }
+        }
+
+        async function runScanner() {
+            // Reset
+            document.querySelectorAll('.grid-cell').forEach(c => c.classList.remove('active'));
+
+            for(let r=0; r<3; r++) {
+                for(let c=0; c<3; c++) {
+                    let cell = document.getElementById(`cell-${r}-${c}`);
+                    cell.classList.add('active');
+                    // Wait 300ms
+                    await new Promise(res => setTimeout(res, 400));
+                    cell.classList.remove('active');
+                }
+            }
+        }
+
+    </script>
+</body>
+</html>

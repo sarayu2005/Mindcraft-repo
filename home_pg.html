@@ -1,0 +1,154 @@
+
+
+
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Vintage Gamified Cards</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      font-family: 'Georgia', serif;
+      background: url('image copy-1920x1080 copy.png') no-repeat center center fixed;
+      background-size: cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    @keyframes wiggle {
+      0%, 100% { transform: rotate(0deg); }
+      25% { transform: rotate(2deg); }
+      50% { transform: rotate(-2deg); }
+      75% { transform: rotate(1deg); }
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        box-shadow: 0 0 8px 2px #9b59b6;
+      }
+      50% {
+        box-shadow: 0 0 16px 6px #8e44ad;
+      }
+      100% {
+        box-shadow: 0 0 8px 2px #9b59b6;
+      }
+    }
+
+    .container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      height: 50%;
+      width: 80%;
+      gap: 20px;
+      border: 6px double #8e44ad;
+      padding: 20px;
+      background-color: rgba(60, 40, 20, 0.2);
+      animation: pulseGlow 2s infinite;
+    }
+
+    .card {
+      flex: 1;
+      height: 100%;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      font-size: 1.8rem;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      box-shadow: 4px 4px 10px rgba(0, 0, 0, 0.3);
+      border: 2px solid #3a2e1a;
+      color: white;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      padding-bottom: 20px;
+      text-align: center;
+      background-color: rgba(0, 0, 0, 0.3);
+    }
+
+    .card span {
+      position: relative;
+      z-index: 2;
+      transition: opacity 0.4s ease;
+      color: white;
+    }
+
+    .card::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 1;
+      z-index: 1;
+      transition: opacity 0.4s ease;
+      filter: brightness(0.75);
+      border-radius: 8px;
+    }
+
+    .card:nth-child(1)::after {
+      background-image: url('10430825.jpg');
+    }
+
+    .card:nth-child(2)::after {
+      background-image: url('10430821.jpg');
+    }
+
+    .card:nth-child(3)::after {
+      background-image: url('10430818.jpg');
+    }
+
+    .card:hover {
+      background-color: rgba(0, 0, 0, 0.3);
+      transform: scale(1.08) rotate(3deg);
+      animation: wiggle 0.4s ease-in-out;
+      color: white;
+    }
+
+    .card:hover span {
+      opacity: 1;
+      z-index: 3;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div class="card" id="topicMapCard"><span>📜 Topic Map</span></div>
+    <div class="card" id="testsCard"><span>🧪 Tests</span></div>
+    <div class="card" id="debugCard"><span>🗡️ Dashboard</span></div>
+  </div>
+
+  <script>
+    document.getElementById('topicMapCard').addEventListener('click', function() {
+      // Assuming compiler.html exists or will be created
+      window.location.href = 'level.html';
+    });
+    
+    document.getElementById('testsCard').addEventListener('click', function() {
+      window.location.href = 'exams.html';
+    });
+
+    document.getElementById('debugCard').addEventListener('click', function() {
+      // Assuming this file exists or will be created
+      window.location.href = 'clickable.html';
+    });
+  </script>
+
+</body>
+</html>

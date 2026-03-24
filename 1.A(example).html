@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Arrays: Example Based Learning</title>
+    <style>
+        /* --- NEON THEME SETUP --- */
+        :root {
+            --bg: #0a0a0a;
+            --panel: #141414;
+            --neon-blue: #00f3ff;
+            --neon-pink: #bc13fe;
+            --neon-green: #0aff68;
+            --neon-yellow: #f5ff00;
+            --text: #ffffff;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            font-size: 2.5rem;
+            text-transform: uppercase;
+            color: var(--neon-blue);
+            text-shadow: 0 0 15px var(--neon-blue);
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            color: var(--neon-green);
+            border-left: 5px solid var(--neon-green);
+            padding-left: 15px;
+            margin-top: 0;
+        }
+
+        /* --- SCENARIO CARDS --- */
+        .scenario-card {
+            background: var(--panel);
+            border: 1px solid #333;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 40px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scenario-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 5px;
+            background: linear-gradient(90deg, var(--neon-pink), var(--neon-blue));
+        }
+
+        p.desc {
+            color: #ccc;
+            margin-bottom: 20px;
+            font-size: 1.1rem;
+        }
+
+        /* --- VISUAL ARRAY ROW --- */
+        .array-container {
+            display: flex;
+            gap: 15px;
+            margin: 30px 0;
+            overflow-x: auto;
+            padding: 10px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 10px;
+        }
+
+        .array-item {
+            min-width: 100px;
+            height: 100px;
+            border: 2px solid #333;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #000;
+            transition: 0.3s;
+            position: relative;
+        }
+
+        .array-item.highlight {
+            border-color: var(--neon-yellow);
+            box-shadow: 0 0 15px var(--neon-yellow);
+            transform: scale(1.05);
+            z-index: 10;
+        }
+
+        .array-item span.val { font-size: 1.5rem; }
+        .array-item span.idx { 
+            position: absolute; 
+            bottom: -25px; 
+            color: #666; 
+            font-family: monospace; 
+        }
+
+        /* --- CODE CONTROL PANEL --- */
+        .code-panel {
+            background: #000;
+            border: 1px solid #444;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .code-text {
+            color: var(--neon-pink);
+            font-size: 1.2rem;
+        }
+        
+        .code-comment { color: #666; font-size: 0.9rem; display: block; margin-top: 5px;}
+
+        button {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+            border-radius: 4px;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 15px var(--neon-blue);
+        }
+
+        .result-box {
+            margin-top: 15px;
+            color: var(--neon-green);
+            min-height: 20px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <h1>Python Arrays: Scenario Learning</h1>
+
+    <div class="scenario-card">
+        <h2>Scenario 1: The Game Inventory (Indexing)</h2>
+        <p class="desc">
+            <strong>Goal:</strong> You are building an RPG. The player has a backpack (list). You need to equip specific items based on their slot number.
+        </p>
+
+        <div class="array-container" id="game-container">
+            </div>
+
+        <div class="code-panel">
+            <div>
+                <div class="code-text">inventory[0]</div>
+                <span class="code-comment"># Computers start counting at 0!</span>
+            </div>
+            <button onclick="highlightGame(0)">Run Code</button>
+        </div>
+        <div style="height: 10px;"></div>
+        <div class="code-panel">
+            <div>
+                <div class="code-text">inventory[2]</div>
+                <span class="code-comment"># This grabs the 3rd item</span>
+            </div>
+            <button onclick="highlightGame(2)">Run Code</button>
+        </div>
+        <div style="height: 10px;"></div>
+        <div class="code-panel">
+            <div>
+                <div class="code-text">inventory[-1]</div>
+                <span class="code-comment"># Negative numbers count from the END</span>
+            </div>
+            <button onclick="highlightGame(4)">Run Code</button>
+        </div>
+        
+        <div class="result-box" id="game-result">Result: Waiting...</div>
+    </div>
+
+    <div class="scenario-card">
+        <h2>Scenario 2: The Playlist (Slicing)</h2>
+        <p class="desc">
+            <strong>Goal:</strong> You have a list of songs. You want to play a specific "chunk" (slice) of the playlist, not just one song.
+        </p>
+
+        <div class="array-container" id="music-container">
+            </div>
+
+        <div class="code-panel">
+            <div>
+                <div class="code-text">playlist[0:2]</div>
+                <span class="code-comment"># Start at 0, STOP before 2 (Indices 0, 1)</span>
+            </div>
+            <button onclick="sliceMusic(0, 2)">Run Slice</button>
+        </div>
+        <div style="height: 10px;"></div>
+        <div class="code-panel">
+            <div>
+                <div class="code-text">playlist[1:4]</div>
+                <span class="code-comment"># Start at 1, STOP before 4 (Indices 1, 2, 3)</span>
+            </div>
+            <button onclick="sliceMusic(1, 4)">Run Slice</button>
+        </div>
+
+        <div class="result-box" id="music-result">Result: Waiting...</div>
+    </div>
+
+    <div class="scenario-card">
+        <h2>Scenario 3: Shopping Cart (Methods)</h2>
+        <p class="desc">
+            <strong>Goal:</strong> Arrays are dynamic. We need to add items to the cart and remove them.
+        </p>
+
+        <div class="array-container" id="cart-container">
+            </div>
+
+        <div class="code-panel">
+            <div>
+                <div class="code-text">cart.append("🍩")</div>
+                <span class="code-comment"># Adds item to the END of list</span>
+            </div>
+            <button onclick="addToCart()">Run Append</button>
+        </div>
+        <div style="height: 10px;"></div>
+        <div class="code-panel">
+            <div>
+                <div class="code-text">cart.pop(0)</div>
+                <span class="code-comment"># Removes item at Index 0</span>
+            </div>
+            <button onclick="removeFromCart()">Run Pop</button>
+        </div>
+
+        <div class="result-box" id="cart-result">Current List Length: 3</div>
+    </div>
+
+    <script>
+        // --- DATA ---
+        const gameItems = ["🗡️ Sword", "🛡️ Shield", "🧪 Potion", "📜 Map", "🔑 Key"];
+        const musicItems = ["🎵 Song A", "🔥 Song B", "🎸 Song C", "🎹 Song D", "🎷 Song E"];
+        let cartItems = ["🍎 Apple", "🥛 Milk", "🥚 Eggs"];
+
+        // --- RENDER FUNCTIONS ---
+        function render(containerId, dataArray) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = "";
+            dataArray.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'array-item';
+                div.id = `${containerId}-item-${index}`;
+                div.innerHTML = `
+                    <span class="val">${item}</span>
+                    <span class="idx">${index}</span>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- INIT ---
+        render('game-container', gameItems);
+        render('music-container', musicItems);
+        render('cart-container', cartItems);
+
+        // --- LOGIC: GAME ---
+        function highlightGame(index) {
+            // Reset Styles
+            gameItems.forEach((_, i) => {
+                document.getElementById(`game-container-item-${i}`).classList.remove('highlight');
+            });
+
+            // Highlight Target
+            const target = document.getElementById(`game-container-item-${index}`);
+            target.classList.add('highlight');
+
+            // Update Text
+            document.getElementById('game-result').innerText = `Python returned: "${gameItems[index]}"`;
+        }
+
+        // --- LOGIC: MUSIC ---
+        function sliceMusic(start, end) {
+            // Reset Styles
+            musicItems.forEach((_, i) => {
+                document.getElementById(`music-container-item-${i}`).classList.remove('highlight');
+                document.getElementById(`music-container-item-${i}`).style.opacity = "0.3";
+            });
+
+            let resultText = [];
+
+            // Highlight Range
+            for(let i = start; i < end; i++) {
+                const item = document.getElementById(`music-container-item-${i}`);
+                if(item) {
+                    item.classList.add('highlight');
+                    item.style.opacity = "1";
+                    resultText.push(musicItems[i]);
+                }
+            }
+
+            document.getElementById('music-result').innerText = `New Sub-List: [ ${resultText.join(', ')} ]`;
+        }
+
+        // --- LOGIC: CART ---
+        function addToCart() {
+            cartItems.push("🍩 Donut");
+            render('cart-container', cartItems);
+            document.getElementById('cart-result').innerText = `Added Donut! List is now ${cartItems.length} items long.`;
+        }
+
+        function removeFromCart() {
+            if(cartItems.length > 0) {
+                const removed = cartItems.shift(); // Remove first for this example
+                render('cart-container', cartItems);
+                document.getElementById('cart-result').innerText = `Removed ${removed}! List is now ${cartItems.length} items long.`;
+            } else {
+                document.getElementById('cart-result').innerText = `Cart is empty!`;
+            }
+        }
+
+    </script>
+</body>
+</html>

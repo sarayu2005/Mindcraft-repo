@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Quest - Gamified Learning Platform</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* --- YOUR EXISTING STYLES --- */
+        .starfield { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(ellipse at top, #0c1445 0%, #09155b 25%, #000000 70%), radial-gradient(ellipse at bottom, #0c1445 0%, #09155b 25%, #000000 70%); background-size: 200% 200%; animation: galaxyShift 12s ease-in-out infinite; z-index: 0; }
+        @keyframes galaxyShift { 0%, 100% { background-position: 0% 0%; } 50% { background-position: 100% 100%; } }
+        .starfield::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-image: radial-gradient(2px 2px at 20px 30px, #ffffff, transparent), radial-gradient(2px 2px at 40px 70px, #ffffff, transparent), radial-gradient(1px 1px at 90px 40px, #ffffff, transparent); background-repeat: repeat; background-size: 600px 400px; animation: drift 15s linear infinite; }
+        @keyframes drift { from { transform: translateX(0); } to { transform: translateX(-200px); } }
+        .floating-particles { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .particle { position: absolute; width: 4px; height: 4px; background: linear-gradient(45deg, #00d4ff, #0099cc); border-radius: 50%; animation: float 6s ease-in-out infinite; box-shadow: 0 0 6px #00d4ff; }
+        @keyframes float { 0%, 100% { transform: translateY(0px) rotate(0deg); opacity: 0.7; } 50% { transform: translateY(-20px) rotate(180deg); opacity: 1; } }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; color: white; overflow-x: hidden; }
+        .stars { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+        .star { position: absolute; width: 2px; height: 2px; background: white; border-radius: 50%; animation: twinkle 3s infinite; }
+        @keyframes twinkle { 0%, 100% { opacity: 0.3; transform: scale(1); } 50% { opacity: 1; transform: scale(1.2); } }
+        .container { position: relative; z-index: 2; max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        .header { text-align: center; margin-bottom: 30px; animation: slideDown 1.2s ease-out; }
+        .header h1 { font-size: 3em; margin-bottom: 10px; background: linear-gradient(45deg, #ff6b6b, #ffd700, #4ecdc4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .header p { font-size: 1.2em; opacity: 0.9; }
+
+        .game-ui { display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.1); backdrop-filter: blur(15px); border-radius: 20px; padding: 15px 25px; margin-bottom: 30px; border: 2px solid rgba(255,255,255,0.2); animation: slideInFromLeft 1s ease-out; }
+        .player-stats { display: flex; gap: 20px; align-items: center; }
+        .stat-item { display: flex; align-items: center; gap: 8px; background: rgba(255,255,255,0.1); padding: 8px 15px; border-radius: 25px; font-weight: bold; }
+        .xp-bar { width: 200px; height: 12px; background: rgba(255,255,255,0.2); border-radius: 6px; overflow: hidden; }
+        .xp-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ffed4a, #ffd700); border-radius: 6px; transition: width 0.8s ease; }
+
+        .main-content { display: grid; grid-template-columns: 1fr 300px; gap: 30px; align-items: start; }
+        .lesson-panel { background: rgba(8, 29, 93, 0.95); border: 2px solid rgba(64, 224, 255, 0.3); box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3); backdrop-filter: blur(20px); border-radius: 20px; padding: 30px; animation: slideUp 1s ease-out; position: relative; }
+        .lesson-header { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; }
+        .lesson-icon { font-size: 2.5em; background: linear-gradient(45deg, #ff6b6b, #ee5a24); padding: 15px; border-radius: 15px; }
+        .lesson-title { font-size: 2em; font-weight: bold; color: #00d4ff; }
+        .lesson-description { background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin-bottom: 25px; border-left: 4px solid #ffd700; }
+        .code-example { background: rgba(0,0,0,0.6); padding: 20px; border-radius: 12px; margin: 20px 0; font-family: 'Courier New', monospace; border: 1px solid rgba(0, 212, 255, 0.3); }
+        .code-example pre { color: #a8e6cf; }
+        
+        .challenge-section { background: rgba(8, 29, 93, 0.95); border: 2px solid rgba(64, 224, 255, 0.3); padding: 25px; border-radius: 15px; margin: 25px 0; }
+        .challenge-header { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; }
+        .challenge-title { font-size: 1.5em; font-weight: bold; color: #ffd700; }
+        .option { background: rgba(255,255,255,0.1); padding: 12px 20px; border-radius: 10px; cursor: pointer; transition: all 0.4s ease; border: 2px solid transparent; margin-bottom: 10px; }
+        .option:hover { background: rgba(255,255,255,0.2); transform: translateX(10px); }
+        .option.selected { border-color: #ffd700; background: rgba(255,215,0,0.2); }
+        .option.correct { border-color: #4caf50; background: rgba(76,175,80,0.2); }
+        .option.incorrect { border-color: #f44336; background: rgba(244,67,54,0.2); }
+
+        .btn { background: linear-gradient(45deg, #ff6b6b, #ee5a24); color: white; border: none; padding: 15px 30px; border-radius: 25px; font-size: 1.1em; font-weight: bold; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .btn:hover { transform: translateY(-3px); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .sidebar { display: flex; flex-direction: column; gap: 20px; }
+        .progress-card { background: rgba(8, 29, 93, 0.95); border: 2px solid rgba(64, 224, 255, 0.3); border-radius: 20px; padding: 25px; }
+        .achievement { display: flex; align-items: center; gap: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 10px; }
+        .achievement.unlocked { background: rgba(255,215,0,0.2); border: 1px solid #ffd700; }
+        
+        .notification { position: fixed; top: 20px; right: 20px; background: linear-gradient(45deg, #4caf50, #45a049); color: white; padding: 15px 25px; border-radius: 10px; transform: translateX(400px); transition: transform 0.5s ease; z-index: 1000; }
+        .notification.show { transform: translateX(0); }
+        
+        .lesson-navigation { display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.2); }
+        .lesson-counter { background: rgba(255,255,255,0.1); padding: 10px 20px; border-radius: 20px; font-weight: bold; border: 1px solid rgba(0, 212, 255, 0.3); }
+
+        @keyframes slideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes slideInFromLeft { from { transform: translateX(-100px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+
+        /* =========================================
+           🆕 NEW STYLES FOR EXIT BUTTON & MODAL 
+           ========================================= */
+        
+        .exit-btn {
+            background: linear-gradient(45deg, #ff416c, #ff4b2b); /* Red Warning Color */
+            width: 100%;
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .exit-btn:hover {
+            box-shadow: 0 5px 20px rgba(255, 75, 43, 0.4);
+        }
+
+        /* Modal Background */
+        .modal-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 99999;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Modal Box */
+        .modal-content {
+            background: rgba(13, 24, 66, 0.95);
+            border: 2px solid #00d4ff;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 212, 255, 0.2);
+            animation: popIn 0.3s ease-out;
+            max-width: 450px;
+            width: 90%;
+            position: relative;
+        }
+
+        .modal-title {
+            font-size: 1.8em;
+            margin-bottom: 10px;
+            color: #fff;
+        }
+
+        .modal-subtitle {
+            margin-bottom: 30px;
+            color: rgba(255,255,255,0.7);
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 15px;
+            border-radius: 12px;
+            border: none;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Specific Button Colors */
+        .btn-level {
+            background: linear-gradient(45deg, #4ecdc4, #556270);
+            border: 1px solid #4ecdc4;
+        }
+        
+        .btn-map {
+            background: linear-gradient(45deg, #a8ff78, #78ffd6);
+            color: #0c1445; /* Dark text for light button */
+            border: 1px solid #a8ff78;
+        }
+
+        .btn-cancel {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            margin-top: 10px;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        .modal-btn:hover {
+            transform: scale(1.02);
+            filter: brightness(1.1);
+        }
+
+    </style>
+</head>
+<body>
+    <div class="starfield"></div>
+    <div class="stars"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🐍 Python Basic Syntax Quest</h1>
+            <p>Master Python's Foundation through Interactive Adventures!</p>
+        </div>
+
+        <div class="game-ui">
+            <div class="player-stats">
+                <div class="stat-item"><span>⚡</span><span>Level <span id="player-level">1</span></span></div>
+                <div class="stat-item"><span>🏆</span><span id="player-xp">0</span> XP</div>
+                <div class="stat-item"><span>🎯</span><span id="challenges-completed">0</span>/10 Challenges</div>
+            </div>
+            <div class="xp-bar"><div class="xp-fill" id="xp-fill" style="width: 0%"></div></div>
+        </div>
+
+        <div class="main-content">
+            <div class="lesson-panel">
+                <div class="lesson-header">
+                    <div class="lesson-icon">🎭</div>
+                    <div>
+                        <div class="lesson-title">Python Basic Syntax</div>
+                        <div>Your First Steps in Python Magic</div>
+                    </div>
+                </div>
+
+                <div class="lesson-description">
+                    <h3>🎯 Welcome to Python!</h3>
+                    <p>Think of Python as a way to talk to your computer using simple English-like words. Let's start your programming journey!</p>
+                </div>
+
+                <div class="code-example">
+                    <pre># Your first Python spell!
+print("Hello, World!")
+# This tells your computer to speak out loud</pre>
+                </div>
+
+                <div id="challenge-container">
+                    </div>
+
+                <div class="lesson-navigation">
+                    <button class="btn" id="prev-btn" onclick="previousChallenge()" disabled>Previous</button>
+                    <div class="lesson-counter">Challenge <span id="current-challenge">1</span> of <span id="total-challenges">10</span></div>
+                    <button class="btn" id="next-btn" onclick="nextChallenge()">Next Challenge</button>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.1); margin-top: 20px; padding-top: 10px;">
+                    <button class="btn exit-btn" onclick="showExitModal()">
+                        <span>🚪</span> Exit Quest
+                    </button>
+                </div>
+
+            </div>
+
+            <div class="sidebar">
+                <div class="progress-card">
+                    <div class="progress-title"><span>🏆</span><span>Achievements</span></div>
+                    <div class="achievement-list" id="achievements">
+                        <div class="achievement" data-achievement="first-print"><div class="achievement-icon">🎯</div><div class="achievement-text">First Print</div></div>
+                        <div class="achievement" data-achievement="comment-master"><div class="achievement-icon">📝</div><div class="achievement-text">Comment Master</div></div>
+                        <div class="achievement" data-achievement="syntax-detective"><div class="achievement-icon">🔍</div><div class="achievement-text">Syntax Detective</div></div>
+                        <div class="achievement" data-achievement="debugging-hero"><div class="achievement-icon">🐛</div><div class="achievement-text">Debugging Hero</div></div>
+                        <div class="achievement" data-achievement="python-pioneer"><div class="achievement-icon">🚀</div><div class="achievement-text">Python Pioneer</div></div>
+                    </div>
+                </div>
+
+                <div class="progress-card">
+                    <div class="progress-title"><span>📚</span><span>Learning Path</span></div>
+                    <div style="font-size: 0.9em; line-height: 1.6;">
+                        <p style="color: #ffd700; font-weight: bold;">🎯 Basic Syntax</p>
+                        <p style="opacity: 0.6;">🔒 Variables & Data Types</p>
+                        <p style="opacity: 0.6;">🔒 Control Flow</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="exitModal" class="modal-overlay">
+        <div class="modal-content">
+            <h2 class="modal-title">Leaving already? 😢</h2>
+            <p class="modal-subtitle">Where would you like to go?</p>
+            
+            <div class="modal-buttons">
+                <button class="modal-btn btn-level" onclick="window.location.href='level.html'">
+                    Go to Level Menu
+                </button>
+                
+                <button class="modal-btn btn-map" onclick="window.location.href='topic map.html'">
+                    Go to Topic Map
+                </button>
+                
+                <button class="modal-btn btn-cancel" onclick="closeExitModal()">
+                    Cancel (Return to Game)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="notification" id="notification"></div>
+
+    <script>
+        // 🔗 Configuration
+        const NEXT_LESSON_URL = "variables.html"; 
+
+        // 🆕 MODAL FUNCTIONS
+        function showExitModal() {
+            document.getElementById('exitModal').style.display = 'flex';
+        }
+
+        function closeExitModal() {
+            document.getElementById('exitModal').style.display = 'none';
+        }
+
+        // Close modal if clicking outside the box
+        window.onclick = function(event) {
+            const modal = document.getElementById('exitModal');
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+
+        // Game state
+        let gameState = {
+            level: 1,
+            xp: 0,
+            challengesCompleted: 0,
+            currentChallenge: 0,
+            achievements: [],
+            startTime: null,
+            selectedOption: undefined
+        };
+
+        const challenges = [
+            { type: "multiple-choice", title: "🧠 Comment Symbol Quest", question: "What symbol creates comments in Python?", code: `# This is a comment\nprint("Hello!")`, options: ["//", "#", "*", "!"], correct: 1, xp: 10 },
+            { type: "multiple-choice", title: "🔍 Case Sensitivity", question: "What happens if you write Print(\"hello\") instead of print(\"hello\")?", code: `Print("hello")`, options: ["Works fine", "Python fixes it", "Causes an error", "Prints uppercase"], correct: 2, xp: 15 },
+            { type: "fill-in-blank", title: "✏️ Complete Print", question: "Complete this code to print \"Welcome\":", code: `_____("Welcome")`, solution: "print", xp: 10 },
+            { type: "fill-in-blank", title: "📐 Indentation Master", question: "Add proper indentation (use 4 spaces):", code: `if 10 > 5:\n_____ print("Ten is bigger")`, solution: "    ", xp: 15 },
+            { type: "coding-mission", title: "💻 Your First Program", question: "Write a program that prints your name using print().", solution: `print("Your Name")`, xp: 20 },
+            { type: "coding-mission", title: "🍕 Favorite Food", question: "Ask for favorite food using input() and print 'I love [food] too!'", solution: `food = input("Food? ")\nprint("I love " + food + " too!")`, xp: 25 },
+            { type: "coding-mission", title: "🧮 Calculator", question: "Calculate 15 + 25 and print result.", solution: `print(15 + 25)`, xp: 15 },
+            { type: "debug", title: "🐛 Debug Code", question: "Fix: print(Hello Python!)", code: `print(Hello Python!)`, solution: `print("Hello Python!")`, xp: 20 },
+            { type: "debug", title: "🔧 Indentation Fix", question: "Fix the indentation error:", code: `if 3 > 1:\nprint("Three is bigger")`, solution: `if 3 > 1:\n    print("Three is bigger")`, xp: 25 },
+            { type: "story-quest", title: "📖 Intro Program", question: "Ask for name and print Hello [name]!", solution: `name = input("Name? ")\nprint("Hello " + name + "!")`, xp: 35 }
+        ];
+
+        function initGame() {
+            createStars();
+            loadChallenge(0);
+            updateUI();
+        }
+
+        function createStars() {
+            const starsContainer = document.querySelector('.stars');
+            for (let i = 0; i < 100; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                star.style.left = Math.random() * 100 + '%';
+                star.style.top = Math.random() * 100 + '%';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        function loadChallenge(index) {
+            const challenge = challenges[index];
+            const container = document.getElementById('challenge-container');
+            gameState.startTime = Date.now();
+            gameState.selectedOption = undefined;
+            
+            let html = `
+                <div class="challenge-section">
+                    <div class="challenge-header">
+                        <span style="font-size: 1.5em;">${challenge.title.split(' ')[0]}</span>
+                        <span class="challenge-title">${challenge.title.substring(challenge.title.indexOf(' ') + 1)}</span>
+                    </div>
+                    <p style="margin-bottom: 15px;">${challenge.question}</p>
+            `;
+
+            if (challenge.code) {
+                html += `<div class="code-example"><pre>${challenge.code}</pre></div>`;
+            }
+
+            if (challenge.type === 'multiple-choice') {
+                html += `<div class="challenge-options">`;
+                challenge.options.forEach((option, i) => {
+                    html += `<div class="option" onclick="selectOption(${i})" data-option="${i}">${String.fromCharCode(65 + i)}) ${option}</div>`;
+                });
+                html += `</div>`;
+            } else if (challenge.type === 'fill-in-blank') {
+                html += `<div style="margin: 15px 0;"><input type="text" id="blank-input" placeholder="Fill in the blank..." style="width: 100%; padding: 10px; background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 5px; font-family: 'Courier New', monospace;"></div>`;
+            } else {
+                html += `<div style="margin: 15px 0;"><textarea id="code-input" placeholder="Write your code here..." style="width: 100%; height: 150px; padding: 15px; background: rgba(0,0,0,0.4); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-family: 'Courier New', monospace; resize: vertical;"></textarea></div>`;
+            }
+
+            html += `<button class="btn" onclick="submitAnswer()" id="submit-btn">Submit Answer</button></div>`;
+            container.innerHTML = html;
+        }
+
+        function selectOption(index) {
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector(`[data-option="${index}"]`).classList.add('selected');
+            gameState.selectedOption = index;
+        }
+
+        function submitAnswer() {
+            const challenge = challenges[gameState.currentChallenge];
+            const submitBtn = document.getElementById('submit-btn');
+            
+            if (challenge.type === 'multiple-choice') {
+                if (gameState.selectedOption === undefined) { showNotification("Please select an option!", "error"); return; }
+                const options = document.querySelectorAll('.option');
+                options.forEach((opt, i) => {
+                    if (i === challenge.correct) opt.classList.add('correct');
+                    else if (i === gameState.selectedOption) opt.classList.add('incorrect');
+                });
+                if (gameState.selectedOption === challenge.correct) completeChallenge(challenge.xp);
+                else { showNotification("Try again!", "error"); return; }
+            } else if (challenge.type === 'fill-in-blank') {
+                const answer = document.getElementById('blank-input').value.trim();
+                if (!answer) { showNotification("Fill the blank!", "error"); return; }
+                // Special check for indentation challenge (4 spaces)
+                if (gameState.currentChallenge === 3) {
+                     // Check if it's empty or has 4 spaces
+                     if (answer === "" || answer.length === 4) completeChallenge(challenge.xp);
+                     else { showNotification("Use exactly 4 spaces!", "error"); return; }
+                } else {
+                    if (answer.toLowerCase() === challenge.solution.toLowerCase()) completeChallenge(challenge.xp);
+                    else { showNotification("Not quite right!", "error"); return; }
+                }
+            } else {
+                const code = document.getElementById('code-input').value.trim();
+                if (!code) { showNotification("Write code first!", "error"); return; }
+                let isValid = false;
+                const codeLower = code.toLowerCase();
+                
+                if (challenge.type === 'coding-mission') {
+                    if (gameState.currentChallenge === 4) isValid = code.includes('print(') && code.includes('"');
+                    else if (gameState.currentChallenge === 5) isValid = code.includes('input(') && code.includes('print(');
+                    else if (gameState.currentChallenge === 6) isValid = code.includes('print(') && code.includes('15') && code.includes('25');
+                } else if (challenge.type === 'debug') {
+                    if (gameState.currentChallenge === 7) isValid = code.includes('print("') && code.includes('")');
+                    else if (gameState.currentChallenge === 8) isValid = code.includes('    print(') || code.includes('\tprint(');
+                } else if (challenge.type === 'story-quest') {
+                    isValid = code.includes('input(') && code.includes('print(');
+                }
+                
+                if (isValid) completeChallenge(challenge.xp);
+                else { showNotification("Check requirements!", "error"); return; }
+            }
+            submitBtn.disabled = true;
+        }
+
+        function completeChallenge(xp) {
+            const timeTaken = (Date.now() - gameState.startTime) / 1000;
+            let bonusXP = timeTaken < 30 ? 5 : 0;
+            gameState.xp += xp + bonusXP;
+            gameState.challengesCompleted++;
+            
+            if (gameState.challengesCompleted === 1) unlockAchievement('first-print');
+            if (gameState.currentChallenge === 0) unlockAchievement('comment-master');
+            if (gameState.currentChallenge === 1) unlockAchievement('syntax-detective');
+            if (challenges[gameState.currentChallenge].type === 'debug') unlockAchievement('debugging-hero');
+            if (gameState.challengesCompleted === challenges.length) unlockAchievement('python-pioneer');
+            
+            const newLevel = Math.floor(gameState.xp / 100) + 1;
+            if (newLevel > gameState.level) {
+                gameState.level = newLevel;
+                showNotification(`🎉 Level Up: ${newLevel}!`, "success");
+            }
+            updateUI();
+            showNotification(`🎉 Correct! +${xp + bonusXP} XP!`, "success");
+        }
+
+        function unlockAchievement(id) {
+            if (!gameState.achievements.includes(id)) {
+                gameState.achievements.push(id);
+                const achievement = document.querySelector(`[data-achievement="${id}"]`);
+                if (achievement) {
+                    achievement.classList.add('unlocked');
+                    showNotification(`🏆 Achievement: ${achievement.querySelector('.achievement-text').textContent}!`, "success");
+                }
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('player-level').textContent = gameState.level;
+            document.getElementById('player-xp').textContent = gameState.xp;
+            document.getElementById('challenges-completed').textContent = gameState.challengesCompleted;
+            document.getElementById('current-challenge').textContent = gameState.currentChallenge + 1;
+            document.getElementById('total-challenges').textContent = challenges.length;
+            document.getElementById('xp-fill').style.width = ((gameState.xp % 100) / 100 * 100) + '%';
+            
+            const prevBtn = document.getElementById('prev-btn');
+            const nextBtn = document.getElementById('next-btn');
+            prevBtn.disabled = gameState.currentChallenge === 0;
+            
+            if (gameState.currentChallenge === challenges.length - 1) nextBtn.textContent = "Start Variables 🚀";
+            else nextBtn.textContent = "Next Challenge";
+            nextBtn.disabled = false;
+        }
+
+        function nextChallenge() {
+            if (gameState.currentChallenge < challenges.length - 1) {
+                gameState.currentChallenge++;
+                loadChallenge(gameState.currentChallenge);
+                updateUI();
+            } else {
+                window.location.href = NEXT_LESSON_URL;
+            }
+        }
+
+        function previousChallenge() {
+            if (gameState.currentChallenge > 0) {
+                gameState.currentChallenge--;
+                loadChallenge(gameState.currentChallenge);
+                updateUI();
+            }
+        }
+
+        function showNotification(message, type = "success") {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.add('show');
+            setTimeout(() => { notification.classList.remove('show'); }, 3000);
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') { e.preventDefault(); submitAnswer(); }
+            else if (e.key === 'ArrowLeft') previousChallenge();
+            else if (e.key === 'ArrowRight') nextChallenge();
+        });
+
+        window.addEventListener('load', initGame);
+    </script>
+</body>
+</html>

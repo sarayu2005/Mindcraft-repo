@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Python Basics - Learning Styles</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-color: #02020a;
+            --card-bg: #050510;
+            --text-main: #ffffff;
+            --text-muted: #8b9bb4;
+            --border-color: #1f2937;
+            
+            /* Theme Colors based on the image */
+            --color-purple: #d946ef;
+            --color-blue: #0ea5e9;
+            --color-green: #22c55e;
+            --color-indigo: #6366f1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem;
+        }
+
+        /* Top Navigation */
+        .top-nav {
+            width: 100%;
+            max-width: 1200px;
+            margin-bottom: 1rem;
+        }
+
+        .back-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: color 0.3s;
+        }
+
+        .back-link:hover {
+            color: white;
+        }
+
+        /* Header Section */
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 3rem;
+            margin-bottom: 0.5rem;
+            /* Gradient Text Effect */
+            background: linear-gradient(90deg, #d946ef, #0ea5e9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            text-shadow: 0 0 20px rgba(217, 70, 239, 0.3);
+        }
+
+        header h2 {
+            font-size: 1.2rem;
+            font-weight: 400;
+            margin-bottom: 0.5rem;
+            color: #ddd;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Grid Layout */
+        .cards-container {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            max-width: 1200px;
+            width: 100%;
+            margin-bottom: 3rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 2.5rem;
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            border-color: #374151;
+        }
+
+        /* Icon Circle */
+        .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid currentColor;
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            box-shadow: 0 0 15px currentColor;
+        }
+
+        /* Typography inside cards */
+        .card h3 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            letter-spacing: 1px;
+        }
+
+        .card p.description {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-bottom: 1.5rem;
+            line-height: 1.4;
+        }
+
+        /* Feature List */
+        .feature-list {
+            list-style: none;
+            margin-bottom: 2rem;
+        }
+
+        .feature-list li {
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .feature-list li::before {
+            content: "•";
+            position: absolute;
+            left: 0;
+            font-size: 1.5rem;
+            line-height: 1rem;
+        }
+
+        /* THE CLICKABLE BUTTON */
+        .select-btn {
+            display: inline-block;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .select-btn:hover {
+            filter: brightness(1.3);
+            transform: translateX(5px);
+        }
+
+        /* Specific Colors for Cards */
+        /* Visual Learner */
+        .style-visual .icon-box { color: var(--color-purple); box-shadow: 0 0 10px rgba(217, 70, 239, 0.3); }
+        .style-visual h3 { color: var(--color-purple); }
+        .style-visual li::before { color: var(--color-purple); }
+        .style-visual .select-btn { color: var(--color-purple); }
+
+        /* Exploratory Learner */
+        .style-explore .icon-box { color: var(--color-blue); box-shadow: 0 0 10px rgba(14, 165, 233, 0.3); }
+        .style-explore h3 { color: var(--color-blue); }
+        .style-explore li::before { color: var(--color-blue); }
+        .style-explore .select-btn { color: var(--color-blue); }
+
+        /* Example-Based Learner */
+        .style-example .icon-box { color: var(--color-green); box-shadow: 0 0 10px rgba(34, 197, 94, 0.3); }
+        .style-example h3 { color: var(--color-green); }
+        .style-example li::before { color: var(--color-green); }
+        .style-example .select-btn { color: var(--color-green); }
+
+        /* Repetitive Learner */
+        .style-repeat .icon-box { color: var(--color-indigo); box-shadow: 0 0 10px rgba(99, 102, 241, 0.3); }
+        .style-repeat h3 { color: var(--color-indigo); }
+        .style-repeat li::before { color: var(--color-indigo); }
+        .style-repeat .select-btn { color: var(--color-indigo); }
+
+        /* Footer Tip */
+        .footer-tip {
+            border: 1px solid var(--border-color);
+            padding: 1.5rem 2rem;
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .footer-tip i {
+            margin-right: 0.5rem;
+            color: white;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .cards-container {
+                grid-template-columns: 1fr;
+            }
+            h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="top-nav">
+        <a href="#" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </nav>
+
+    <header>
+        <h1>Python Basics</h1>
+        <h2>Choose Your Learning Style</h2>
+        <p>Pick the learning approach that works best for you - you can try any style!</p>
+    </header>
+
+    <div class="cards-container">
+
+        <article class="card style-visual">
+            <div class="icon-box">
+                <i class="fas fa-eye"></i>
+            </div>
+            <h3>Visual Learner</h3>
+            <p class="description">Learn with diagrams, animations, and visual aids</p>
+            <ul class="feature-list">
+                <li>Flow diagrams</li>
+                <li>Animated examples</li>
+                <li>Color-coded concepts</li>
+                <li>Visual metaphors</li>
+            </ul>
+            <a href="learning_modules.html#visual" class="select-btn">Select This Style &nbsp; &rarr;</a>
+        </article>
+
+        <article class="card style-explore">
+            <div class="icon-box">
+                <i class="fas fa-compass"></i>
+            </div>
+            <h3>Exploratory Learner</h3>
+            <p class="description">Experiment and discover through hands-on practice</p>
+            <ul class="feature-list">
+                <li>Interactive challenges</li>
+                <li>Trial and error</li>
+                <li>Open-ended problems</li>
+                <li>Discovery-based learning</li>
+            </ul>
+            <a href="learning_modules.html#exploratory" class="select-btn">Select This Style &nbsp; &rarr;</a>
+        </article>
+
+        <article class="card style-example">
+            <div class="icon-box">
+                <i class="fas fa-book-open"></i>
+            </div>
+            <h3>Example-Based Learner</h3>
+            <p class="description">Master concepts through multiple examples and patterns</p>
+            <ul class="feature-list">
+                <li>Multiple examples</li>
+                <li>Pattern recognition</li>
+                <li>Side-by-side comparisons</li>
+                <li>Example walkthroughs</li>
+            </ul>
+            <a href="learning_modules.html#example" class="select-btn">Select This Style &nbsp; &rarr;</a>
+        </article>
+
+        <article class="card style-repeat">
+            <div class="icon-box">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <h3>Repetitive Learner</h3>
+            <p class="description">Build mastery through consistent practice and drills</p>
+            <ul class="feature-list">
+                <li>Practice exercises</li>
+                <li>Repeated drills</li>
+                <li>Reinforcement quizzes</li>
+                <li>Spaced repetition</li>
+            </ul>
+            <a href="learning_modules.html#repetitive" class="select-btn">Select This Style &nbsp; &rarr;</a>
+        </article>
+
+    </div>
+
+    <div class="footer-tip">
+        <i class="fas fa-lightbulb"></i>
+        <strong>Tip:</strong> You can try different learning styles anytime! Each style teaches the same concepts in a way that matches different learning preferences.
+    </div>
+
+</body>
+</html>

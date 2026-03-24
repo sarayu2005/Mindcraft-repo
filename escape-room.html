@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Code Escape Room</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Base class for all animated backgrounds */
+    .animated-bg {
+        position: relative;
+        z-index: 1; /* Ensure content is above the pseudo-element */
+        overflow: hidden; /* Keep pseudo-elements contained */
+    }
+    /* The pseudo-element that will hold the animation */
+    .animated-bg::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none; /* Make sure it doesn't interfere with clicks */
+        z-index: -1; /* Place the animation behind the content */
+    }
+
+    /* Zombie: A red, ominous pulsing glow from below */
+    @keyframes zombie-glow {
+        0%, 100% { opacity: 0.4; transform: scale(1); }
+        50% { opacity: 0.7; transform: scale(1.1); }
+    }
+    .theme-zombie::after {
+        background: radial-gradient(ellipse 80% 50% at 50% 120%, rgba(220, 38, 38, 0.4), transparent);
+        animation: zombie-glow 7s infinite ease-in-out;
+    }
+
+    /* Detective: A slow, sweeping searchlight effect */
+    @keyframes searchlight {
+        0% { transform: translateX(-150%) skewX(-30deg); }
+        100% { transform: translateX(150%) skewX(-30deg); }
+    }
+    .theme-detective::after {
+        background: linear-gradient(90deg, transparent, rgba(251, 191, 36, 0.08), transparent);
+        width: 100%;
+        animation: searchlight 10s infinite linear alternate;
+        animation-delay: -5s; /* Start the animation in the middle of its cycle */
+    }
+
+    /* Space Pirate: A shimmering cosmic dust or nebula effect */
+    @keyframes space-shimmer {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .theme-spacePirate::after {
+        background: linear-gradient(120deg, rgba(0, 255, 255, 0), rgba(0, 255, 255, 0.1), rgba(0, 255, 255, 0), rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0));
+        background-size: 200% 200%;
+        animation: space-shimmer 15s infinite ease-in-out;
+    }
+    
+    /* Main Menu: A more subtle, generic purple shimmer */
+    @keyframes menu-shimmer {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    .theme-menu::after {
+        background: linear-gradient(120deg, rgba(167, 139, 250, 0), rgba(167, 139, 250, 0.1), rgba(167, 139, 250, 0));
+        background-size: 200% 200%;
+        animation: menu-shimmer 20s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const CodeEscapeRoom = () => {
+      const [gameState, setGameState] = useState('menu');
+      const [theme, setTheme] = useState(null);
+      const [currentChallenge, setCurrentChallenge] = useState(0);
+      const [timeLeft, setTimeLeft] = useState(900);
+      const [userCode, setUserCode] = useState('');
+      const [feedback, setFeedback] = useState('');
+      const [unlockedChallenges, setUnlockedChallenges] = useState([0]);
+      const [score, setScore] = useState(0);
+
+      // Icon component to safely render Lucide icons with React
+      const Icon = ({ name, className }) => {
+        if (!lucide || !lucide.icons[name]) {
+            return <span className={`inline-block ${className}`}></span>;
+        }
+        const svgHtml = lucide.icons[name].toSvg({ class: className });
+        return <span dangerouslySetInnerHTML={{ __html: svgHtml }} />;
+      };
+
+      const themes = {
+        zombie: {
+          name: "Zombie Apocalypse Lab",
+          description: "You're trapped in a bio-research facility. The zombie outbreak is spreading! Solve coding challenges to unlock the emergency exit before it's too late.",
+          bgColor: "bg-gradient-to-br from-gray-900 via-red-950 to-gray-900",
+          accentColor: "text-red-500",
+          buttonColor: "bg-red-600 hover:bg-red-700",
+          challenges: [
+            {
+              id: 0,
+              title: "Emergency Power System",
+              description: "The power is failing! Write a function that calculates the total battery power. Each battery provides 25 watts.",
+              prompt: "Write a function calculatePower(batteries) that returns the total watts:",
+              starterCode: "function calculatePower(batteries) {\n  // Your code here\n}",
+              testCases: [
+                { input: [20], expected: 500, description: "20 batteries" },
+                { input: [15], expected: 375, description: "15 batteries" },
+                { input: [30], expected: 750, description: "30 batteries" }
+              ],
+              hint: "Multiply the number of batteries by 25."
+            },
+            {
+              id: 1,
+              title: "Antidote Formula",
+              description: "Find the antidote! Given an array of chemical codes, return only the ones that start with 'ANT' (case-insensitive).",
+              prompt: "Write a function findAntidote(chemicals) that filters antidote chemicals:",
+              starterCode: "function findAntidote(chemicals) {\n  // Your code here\n}",
+              testCases: [
+                { input: [['ANT-42', 'TOX-13', 'ant-99', 'BIO-7']], expected: ['ANT-42', 'ant-99'], description: "Mixed chemicals" },
+                { input: [['TOX-1', 'ant-5', 'ANT-X']], expected: ['ant-5', 'ANT-X'], description: "More antidotes" }
+              ],
+              hint: "Use filter() and check if the string starts with 'ant' after converting to lowercase."
+            },
+            {
+              id: 2,
+              title: "Zombie Detection System",
+              description: "The motion sensors detected movement! Count how many zombies are in range. Each 'Z' in the string represents a zombie.",
+              prompt: "Write a function countZombies(sensorData) that counts 'Z' characters:",
+              starterCode: "function countZombies(sensorData) {\n  // Your code here\n}",
+              testCases: [
+                { input: ["HZHZZHHHZ"], expected: 4, description: "Sensor scan 1" },
+                { input: ["HHHHZZHZZ"], expected: 4, description: "Sensor scan 2" },
+                { input: ["ZZZZHHHHH"], expected: 4, description: "Sensor scan 3" }
+              ],
+              hint: "Split the string and filter for 'Z', then get the length of the resulting array."
+            },
+            {
+              id: 3,
+              title: "Escape Route Calculator",
+              description: "Final challenge! Calculate the shortest safe path. Given distances to exits, return the minimum distance.",
+              prompt: "Write a function shortestPath(distances) that returns the minimum:",
+              starterCode: "function shortestPath(distances) {\n  // Your code here\n}",
+              testCases: [
+                { input: [[120, 85, 200, 95]], expected: 85, description: "Four exits" },
+                { input: [[300, 150, 175]], expected: 150, description: "Three exits" }
+              ],
+              hint: "Use Math.min() with the spread operator (...)."
+            }
+          ]
+        },
+        detective: {
+          name: "Detective's Office Mystery",
+          description: "You're locked in a detective's office investigating a cold case. Crack the coding puzzles to unlock the evidence vault and escape!",
+          bgColor: "bg-gradient-to-br from-amber-900 via-stone-900 to-slate-900",
+          accentColor: "text-amber-400",
+          buttonColor: "bg-amber-600 hover:bg-amber-700",
+          challenges: [
+            {
+              id: 0,
+              title: "Case File Decoder",
+              description: "The case files are encoded! Reverse a string to reveal the clue.",
+              prompt: "Write a function decodeFile(file) that reverses the string:",
+              starterCode: "function decodeFile(file) {\n  // Your code here\n}",
+              testCases: [
+                { input: ['snoitulos'], expected: 'solutions', description: "File 1" },
+                { input: ['ecnedive'], expected: 'evidence', description: "File 2" }
+              ],
+              hint: "Use split('').reverse().join('')"
+            },
+            {
+              id: 1,
+              title: "Suspect Fingerprint Match",
+              description: "Match the fingerprints! Count how many times a suspect ID appears in the evidence array.",
+              prompt: "Write a function countMatches(evidence, suspectId) that counts occurrences:",
+              starterCode: "function countMatches(evidence, suspectId) {\n  // Your code here\n}",
+              testCases: [
+                { input: [[1, 2, 3, 2, 2, 4], 2], expected: 3, description: "Suspect 2" },
+                { input: [[5, 5, 5, 1, 5], 5], expected: 4, description: "Suspect 5" }
+              ],
+              hint: "Use filter() to find matching IDs, then return the length."
+            },
+            {
+              id: 2,
+              title: "Evidence Timeline",
+              description: "Sort the evidence by timestamp! Given an array of numbers (timestamps), return them sorted in ascending order.",
+              prompt: "Write a function sortEvidence(timestamps) that sorts the array:",
+              starterCode: "function sortEvidence(timestamps) {\n  // Your code here\n}",
+              testCases: [
+                { input: [[1450, 1200, 1630, 1100]], expected: [1100, 1200, 1450, 1630], description: "Four timestamps" },
+                { input: [[900, 2100, 1500]], expected: [900, 1500, 2100], description: "Three timestamps" }
+              ],
+              hint: "Use sort() with a compare function: (a, b) => a - b."
+            },
+            {
+              id: 3,
+              title: "Vault Combination",
+              description: "Final puzzle! Calculate the vault code by summing all numbers in the array.",
+              prompt: "Write a function calculateCode(numbers) that returns the sum:",
+              starterCode: "function calculateCode(numbers) {\n  // Your code here\n}",
+              testCases: [
+                { input: [[10, 20, 30, 40]], expected: 100, description: "Four numbers" },
+                { input: [[5, 15, 25]], expected: 45, description: "Three numbers" }
+              ],
+              hint: "Use reduce() to sum all elements."
+            }
+          ]
+        },
+        spacePirate: {
+          name: "Space Pirate Treasure Hunt",
+          description: "You're a rogue explorer who's found a legendary pirate's treasure hoard. Solve coding clues to bypass the ship's security and claim the loot!",
+          bgColor: "bg-gradient-to-br from-indigo-900 via-blue-950 to-gray-900",
+          accentColor: "text-cyan-400",
+          buttonColor: "bg-cyan-500 hover:bg-cyan-600",
+          challenges: [
+            {
+              id: 0,
+              title: "Starmap Navigation",
+              description: "The starmap is a list of coordinates. Find the total distance by summing all positive numbers (ignore negative space anomalies).",
+              prompt: "Write a function calculateDistance(coords) that sums positive numbers:",
+              starterCode: "function calculateDistance(coords) {\n  // Your code here\n}",
+              testCases: [
+                { input: [[10, -5, 20, 15, -8]], expected: 45, description: "Coordinates Set 1" },
+                { input: [[100, 200, -300, 50]], expected: 350, description: "Coordinates Set 2" }
+              ],
+              hint: "Use filter() to get positive numbers, then reduce() to sum them."
+            },
+            {
+              id: 1,
+              title: "Alien Language Translator",
+              description: "The ship's log is in an alien script! Each word is spelled backward. Reverse a given string to translate it.",
+              prompt: "Write a function translate(word) that reverses the string:",
+              starterCode: "function translate(word) {\n  // Your code here\n}",
+              testCases: [
+                { input: ["retupmoc"], expected: "computer", description: "Alien word 1" },
+                { input: ["erusaert"], expected: "treasure", description: "Alien word 2" }
+              ],
+              hint: "Use split('').reverse().join('') to reverse the string."
+            },
+            {
+              id: 2,
+              title: "Identify Valuable Loot",
+              description: "The cargo hold is full of items. Create a new list containing only items with a value greater than 100 credits.",
+              prompt: "Write a function findValuables(items) filtering by value > 100:",
+              starterCode: "function findValuables(items) {\n  // Your code here\n}",
+              testCases: [
+                { input: [[{name: 'Gold', value: 200}, {name: 'Rock', value: 10}, {name: 'Gem', value: 150}]], expected: [{name: 'Gold', value: 200}, {name: 'Gem', value: 150}], description: "Cargo scan 1" },
+                { input: [[{name: 'Scrap', value: 5}, {name: 'Crystal', value: 500}, {name: 'Dust', value: 99}]], expected: [{name: 'Crystal', value: 500}], description: "Cargo scan 2" }
+              ],
+              hint: "Use filter() and check the 'value' property of each object."
+            },
+            {
+              id: 3,
+              title: "Unlock the Treasure Chest",
+              description: "The final lock requires a key phrase. Combine an array of words into a single sentence string, separated by spaces.",
+              prompt: "Write a function formPhrase(words) that joins words:",
+              starterCode: "function formPhrase(words) {\n  // Your code here\n}",
+              testCases: [
+                { input: [['open', 'sesame']], expected: "open sesame", description: "Phrase 1" },
+                { input: [['the', 'treasure', 'is', 'mine']], expected: "the treasure is mine", description: "Phrase 2" }
+              ],
+              hint: "Use the join(' ') method on the array."
+            }
+          ]
+        }
+      };
+
+      useEffect(() => {
+        if (gameState === 'playing' && timeLeft > 0) {
+          const timer = setInterval(() => {
+            setTimeLeft(prev => {
+              if (prev <= 1) {
+                setGameState('lost');
+                return 0;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          return () => clearInterval(timer);
+        }
+      }, [gameState, timeLeft]);
+
+      const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      };
+
+      const startGame = (selectedTheme) => {
+        setTheme(selectedTheme);
+        setGameState('playing');
+        setCurrentChallenge(0);
+        setTimeLeft(900);
+        setUserCode(themes[selectedTheme].challenges[0].starterCode);
+        setUnlockedChallenges([0]);
+        setScore(0);
+        setFeedback('');
+      };
+
+      const runTests = () => {
+        const challenge = themes[theme].challenges[currentChallenge];
+        setFeedback('');
+        
+        try {
+          const userFunction = new Function('return ' + userCode)();
+          let allPassed = true;
+          const results = [];
+
+          for (let test of challenge.testCases) {
+            try {
+              const inputCopy = JSON.parse(JSON.stringify(test.input));
+              const result = userFunction(...inputCopy);
+              const passed = JSON.stringify(result) === JSON.stringify(test.expected);
+              results.push({ ...test, passed, result });
+              if (!passed) allPassed = false;
+            } catch (err) {
+              results.push({ ...test, passed: false, error: err.message });
+              allPassed = false;
+            }
+          }
+
+          if (allPassed) {
+            const points = 100 + Math.floor(timeLeft / 10);
+            setScore(prev => prev + points);
+            setFeedback(`✓ All tests passed! +${points} points! Next challenge unlocked!`);
+            
+            if (currentChallenge < themes[theme].challenges.length - 1) {
+              setUnlockedChallenges(prev => [...new Set([...prev, currentChallenge + 1])]);
+            } else {
+              setTimeout(() => setGameState('won'), 1500);
+            }
+          } else {
+            const failedTests = results.filter(r => !r.passed);
+            setFeedback(`✗ ${failedTests.length} test(s) failed. Keep trying!`);
+          }
+        } catch (err) {
+          setFeedback(`✗ Syntax Error: ${err.message}`);
+        }
+      };
+
+      const switchChallenge = (id) => {
+        if (unlockedChallenges.includes(id)) {
+          setCurrentChallenge(id);
+          setUserCode(themes[theme].challenges[id].starterCode);
+          setFeedback('');
+        }
+      };
+
+      if (gameState === 'menu') {
+        return (
+          <div className="min-h-screen animated-bg theme-menu bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4 sm:p-8">
+            <div className="max-w-6xl w-full">
+              <div className="text-center mb-12">
+                <Icon name="code" className="w-20 h-20 text-purple-400 mx-auto mb-4" />
+                <h1 className="text-4xl sm:text-5xl font-bold text-white mb-4">Code Escape Room</h1>
+                <p className="text-lg sm:text-xl text-gray-300">Solve coding challenges to escape before time runs out!</p>
+                <p className="text-md sm:text-lg text-purple-300 mt-2">⏱️ 15 minutes • 4 challenges per room</p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div 
+                  onClick={() => startGame('zombie')}
+                  className="bg-gradient-to-br from-red-900 to-gray-900 p-8 rounded-xl cursor-pointer transform hover:scale-105 transition border-2 border-red-600 hover:border-red-400"
+                >
+                  <Icon name="skull" className="w-16 h-16 text-red-500 mb-4" />
+                  <h2 className="text-3xl font-bold text-white mb-3">{themes.zombie.name}</h2>
+                  <p className="text-gray-300">{themes.zombie.description}</p>
+                  <div className="mt-4 text-red-400 font-semibold">CLICK TO ENTER →</div>
+                </div>
+
+                <div 
+                  onClick={() => startGame('detective')}
+                  className="bg-gradient-to-br from-amber-900 to-slate-900 p-8 rounded-xl cursor-pointer transform hover:scale-105 transition border-2 border-amber-600 hover:border-amber-400"
+                >
+                  <Icon name="search" className="w-16 h-16 text-amber-500 mb-4" />
+                  <h2 className="text-3xl font-bold text-white mb-3">{themes.detective.name}</h2>
+                  <p className="text-gray-300">{themes.detective.description}</p>
+                  <div className="mt-4 text-amber-400 font-semibold">CLICK TO ENTER →</div>
+                </div>
+
+                <div 
+                  onClick={() => startGame('spacePirate')}
+                  className="bg-gradient-to-br from-indigo-900 to-gray-900 p-8 rounded-xl cursor-pointer transform hover:scale-105 transition border-2 border-cyan-600 hover:border-cyan-400"
+                >
+                  <Icon name="rocket" className="w-16 h-16 text-cyan-500 mb-4" />
+                  <h2 className="text-3xl font-bold text-white mb-3">{themes.spacePirate.name}</h2>
+                  <p className="text-gray-300">{themes.spacePirate.description}</p>
+                  <div className="mt-4 text-cyan-400 font-semibold">CLICK TO ENTER →</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      
+      const themeKey = theme || 'menu';
+      const themeClassName = `theme-${themeKey}`;
+
+      if (gameState === 'won') {
+        return (
+          <div className={`min-h-screen animated-bg ${themeClassName} ${themes[theme].bgColor} flex items-center justify-center p-8`}>
+            <div className="max-w-2xl w-full bg-green-900 bg-opacity-90 p-12 rounded-xl text-center border-4 border-green-500 shadow-2xl">
+              <Icon name="trophy" className="w-24 h-24 text-yellow-400 mx-auto mb-6" />
+              <h1 className="text-5xl font-bold text-white mb-4">🎉 YOU ESCAPED! 🎉</h1>
+              <p className="text-2xl text-green-200 mb-6">Time Remaining: {formatTime(timeLeft)}</p>
+              <p className="text-3xl text-yellow-300 font-bold mb-8">Final Score: {score}</p>
+              <button 
+                onClick={() => setGameState('menu')}
+                className="bg-white text-green-900 px-8 py-3 rounded-lg font-bold text-xl hover:bg-green-100 transition transform hover:scale-105"
+              >
+                Play Again
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      if (gameState === 'lost') {
+        return (
+          <div className={`min-h-screen animated-bg ${themeClassName} ${themes[theme].bgColor} flex items-center justify-center p-8`}>
+            <div className="max-w-2xl w-full bg-red-900 bg-opacity-90 p-12 rounded-xl text-center border-4 border-red-600 shadow-2xl">
+              <Icon name="alert-circle" className="w-24 h-24 text-red-300 mx-auto mb-6" />
+              <h1 className="text-5xl font-bold text-white mb-4">TIME'S UP!</h1>
+              <p className="text-xl text-red-200 mb-6">You didn't escape in time...</p>
+              <p className="text-2xl text-white font-bold mb-8">Score: {score}</p>
+              <button 
+                onClick={() => setGameState('menu')}
+                className="bg-white text-red-900 px-8 py-3 rounded-lg font-bold text-xl hover:bg-red-100 transition transform hover:scale-105"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        );
+      }
+
+      const currentChallengeData = themes[theme].challenges[currentChallenge];
+
+      return (
+        <div className={`min-h-screen animated-bg ${themeClassName} ${themes[theme].bgColor} p-2 sm:p-6 transition-colors duration-500`}>
+          <div className="max-w-7xl mx-auto">
+            <div className="bg-black bg-opacity-50 backdrop-blur-sm p-4 rounded-lg mb-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+              <div>
+                <h1 className={`text-2xl sm:text-3xl font-bold ${themes[theme].accentColor}`}>{themes[theme].name}</h1>
+                <p className="text-gray-300">Score: <span className="font-bold text-white">{score}</span></p>
+              </div>
+              <div className="flex items-center gap-6">
+                <div className={`flex items-center gap-2 text-2xl font-bold ${timeLeft < 60 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                  <Icon name="timer" className="w-8 h-8" />
+                  {formatTime(timeLeft)}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+              {themes[theme].challenges.map((ch, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => switchChallenge(idx)}
+                  disabled={!unlockedChallenges.includes(idx)}
+                  className={`p-3 sm:p-4 rounded-lg font-bold flex items-center justify-center gap-2 transition ${
+                    unlockedChallenges.includes(idx)
+                      ? currentChallenge === idx
+                        ? `${themes[theme].buttonColor} text-white shadow-lg`
+                        : 'bg-gray-700 text-white hover:bg-gray-600'
+                      : 'bg-gray-900 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  <Icon name={unlockedChallenges.includes(idx) ? 'unlock' : 'lock'} className="w-5 h-5" />
+                  <span className="hidden sm:inline">Challenge </span>{idx + 1}
+                </button>
+              ))}
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="bg-black bg-opacity-60 backdrop-blur-sm p-6 rounded-lg border border-gray-700">
+                <h2 className={`text-2xl font-bold mb-4 ${themes[theme].accentColor}`}>
+                  {currentChallengeData.title}
+                </h2>
+                <p className="text-gray-200 mb-4 text-lg">{currentChallengeData.description}</p>
+                <div className="bg-gray-900 p-4 rounded-lg mb-4 border border-gray-600">
+                  <p className="text-green-400 font-mono">{currentChallengeData.prompt}</p>
+                </div>
+                <details className="text-gray-300 bg-gray-900/50 p-3 rounded-lg">
+                  <summary className="cursor-pointer text-yellow-400 font-semibold">💡 Hint</summary>
+                  <p className="mt-2 pl-4 border-l-2 border-yellow-500">{currentChallengeData.hint}</p>
+                </details>
+
+                {feedback && (
+                  <div className={`mt-4 p-4 rounded-lg font-bold transition-all ${
+                    feedback.includes('✓') ? 'bg-green-900 text-green-200 border border-green-700' : 'bg-red-900 text-red-200 border border-red-700'
+                  }`}>
+                    {feedback}
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-black bg-opacity-60 backdrop-blur-sm p-6 rounded-lg border border-gray-700">
+                <h3 className="text-xl font-bold text-white mb-3">Code Editor</h3>
+                <textarea
+                  value={userCode}
+                  onChange={(e) => setUserCode(e.target.value)}
+                  className="w-full h-64 bg-gray-900 text-green-400 font-mono p-4 rounded-lg border-2 border-gray-700 focus:border-cyan-500 focus:outline-none focus:ring-2 focus:ring-cyan-500/50"
+                  spellCheck={false}
+                />
+                <button
+                  onClick={runTests}
+                  className={`w-full mt-4 ${themes[theme].buttonColor} text-white py-3 rounded-lg font-bold text-lg transition transform hover:scale-105`}
+                >
+                  🚀 Run Tests & Submit
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<CodeEscapeRoom />);
+  </script>
+</body>
+</html>
+
+
